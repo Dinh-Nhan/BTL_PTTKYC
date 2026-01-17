@@ -8,7 +8,7 @@ namespace backend.Controllers
 {
 
     [ApiController]
-    [Route("rooms")]
+    [Route("api/[controller]")]
     public class RoomController : ControllerBase
     {
 
