@@ -16,6 +16,7 @@ namespace backend.Mappings
             CreateMap<updateRoomTypeRequest, RoomType>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<CreateRoomTypeRequest, RoomType>();
+            CreateMap<Client, ClientResponse>();
         }
 
     }
