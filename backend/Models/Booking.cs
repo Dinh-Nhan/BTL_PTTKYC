@@ -35,7 +35,7 @@ public partial class Booking
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual ICollection<Bill> Bill { get; set; } = new List<Bill>();
+    public virtual ICollection<Bill> Bills { get; set; } = new List<Bill>();
 
     public virtual Client Client { get; set; } = null!;
 

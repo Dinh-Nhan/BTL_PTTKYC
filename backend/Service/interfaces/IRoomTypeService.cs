@@ -6,11 +6,13 @@ namespace backend.Service.interfaces
 {
     public interface IRoomTypeService
     {
-        ApiResponse<bool> updateRoomType(updateRoomTypeRequest request);
+        ApiResponse<RoomTypeResponse> updateRoomType(int roomTypeId, updateRoomTypeRequest request);
         ApiResponse<RoomTypeResponse> createNewRoomType(CreateRoomTypeRequest roomType);
     
         ApiResponse<RoomTypeResponse> getByRoomTypeId(int roomTypeId);
 
         ApiResponse<bool> deleteRoomType(int roomTypeId);
+
+        ApiResponse<List<RoomTypeResponse>> getAllRoomType();
     }
 }

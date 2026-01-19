@@ -15,7 +15,7 @@ namespace backend.Repository.implementations
 
         public bool activeRoom(int roomId)
         {
-            var room = _context.Room.Find(roomId);
+            var room = _context.Rooms.Find(roomId);
 
             if (room == null)
             {
@@ -29,7 +29,7 @@ namespace backend.Repository.implementations
 
         public  bool deactiveRoom(int roomId)
         {
-            var room =  _context.Room.Find(roomId);
+            var room =  _context.Rooms.Find(roomId);
             
             if(room == null)
             {
@@ -43,14 +43,14 @@ namespace backend.Repository.implementations
 
         public async Task<IEnumerable<Room>> GetAllRoomsAsync()
         {
-            return await _context.Room
+            return await _context.Rooms
                         .Include(r => r.RoomType)   
                         .ToListAsync();
         }
 
         public Room? getById(int roomId)
         {
-            return _context.Room.Find(roomId);
+            return _context.Rooms.Find(roomId);
         }
 
         public Room updateRoom(int roomId, Room update)

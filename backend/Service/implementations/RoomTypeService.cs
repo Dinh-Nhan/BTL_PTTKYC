@@ -93,6 +93,25 @@ namespace backend.Service.implementations
                 );
         }
 
+        public ApiResponse<List<RoomTypeResponse>> getAllRoomType()
+        {
+            try
+            {
+                return _apiResponseFactory.Success(
+                        _roomTypeRepository
+                        .getAllRoomType()
+                        .Select(r => _mapper.Map<RoomTypeResponse>(r))
+                        .ToList()
+                    );
+            }catch(Exception ex)
+            {
+                return _apiResponseFactory.Fail<List<RoomTypeResponse>>(
+                        StatusCodes.Status400BadRequest,
+                        "Room Type is empty!"
+                    );
+            }
+        }
+
         public ApiResponse<RoomTypeResponse> getByRoomTypeId(int roomTypeId)
         {
             if (roomTypeId <= 0)
@@ -118,35 +137,39 @@ namespace backend.Service.implementations
 
         }
 
-        public ApiResponse<bool> updateRoomType(updateRoomTypeRequest request)
+        public ApiResponse<RoomTypeResponse> updateRoomType(int roomTypeId, updateRoomTypeRequest request)
         {
-            if(request == null)
+            Console.WriteLine("object request to update " + request);
+
+            var existingRoomType = _roomTypeRepository.getByRoomTypeId(roomTypeId);
+
+            if (existingRoomType == null)
             {
-                return _apiResponseFactory.Fail<bool>(
-                        StatusCodes.Status400BadRequest,
-                        "room is invalid!"
+                return _apiResponseFactory.Fail<RoomTypeResponse>(
+                        StatusCodes.Status404NotFound,
+                        "Room type not found!"
                     );
             }
 
-            var roomUpdate = _mapper.Map<RoomType>(request);
+            _mapper.Map(request, existingRoomType);
 
-            roomUpdate.UpdatedAt = DateTime.Now;
+            existingRoomType.UpdatedAt = DateTime.Now;
 
-            bool result = _roomTypeRepository.updateRoomType(roomUpdate);
+            var result = _roomTypeRepository.updateRoomType(existingRoomType);
 
-            if (result) 
+            if (result == null) 
             {
-                return _apiResponseFactory.Success(
-                    result,
-                    "Update room type successfully!"
+                return _apiResponseFactory.Fail<RoomTypeResponse>(
+                    StatusCodes.Status500InternalServerError,
+                    "Update room type failed!"
                     
                 );
             }
             else
             {
-                return _apiResponseFactory.Fail<bool>(
-                    StatusCodes.Status500InternalServerError,
-                    "Update room type failed!"
+                return _apiResponseFactory.Success(
+                    _mapper.Map<RoomTypeResponse>(result),
+                    "Update room type successfully!"
                 );
             }
         }

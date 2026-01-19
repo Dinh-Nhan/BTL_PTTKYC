@@ -15,5 +15,5 @@ public partial class Client
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual ICollection<Booking> Booking { get; set; } = new List<Booking>();
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }

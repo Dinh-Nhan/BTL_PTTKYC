@@ -15,28 +15,34 @@ namespace backend.Repository.implementations
 
         public RoomType createNewRoomType(RoomType roomType)
         {
-            _context.RoomType.Add(roomType);
+            _context.RoomTypes.Add(roomType);
             _context.SaveChanges();
             return roomType;
         }
 
         public bool deleteRoomType(RoomType roomType)
         {
-            _context.RoomType.Remove(roomType);
+            _context.RoomTypes.Remove(roomType);
             return _context.SaveChanges() > 0;
             
         }
 
+        public List<RoomType> getAllRoomType()
+        {
+            return _context.RoomTypes.ToList();
+        }
+
         public RoomType? getByRoomTypeId(int roomTypeId)
         {
-            return _context.RoomType.Find(roomTypeId);
+            return _context.RoomTypes.Find(roomTypeId);
 
         }
 
-        public bool updateRoomType(RoomType roomType)
+        public RoomType updateRoomType(RoomType roomType)
         {
-           _context.RoomType.Update(roomType);
-           return _context.SaveChanges() > 0;
+           var updatedRoomType = _context.RoomTypes.Update(roomType);
+           _context.SaveChanges();
+           return updatedRoomType.Entity;
 
         }
     }

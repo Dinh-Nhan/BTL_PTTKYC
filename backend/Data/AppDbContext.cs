@@ -16,20 +16,21 @@ public partial class AppDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Bill> Bill { get; set; }
+    public virtual DbSet<Bill> Bills { get; set; }
 
-    public virtual DbSet<BillDetail> BillDetail { get; set; }
+    public virtual DbSet<BillDetail> BillDetails { get; set; }
 
-    public virtual DbSet<Booking> Booking { get; set; }
+    public virtual DbSet<Booking> Bookings { get; set; }
 
-    public virtual DbSet<Client> Client { get; set; }
+    public virtual DbSet<Client> Clients { get; set; }
 
-    public virtual DbSet<Room> Room { get; set; }
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
-    public virtual DbSet<RoomType> RoomType { get; set; }
+    public virtual DbSet<Room> Rooms { get; set; }
 
-    public virtual DbSet<User> User { get; set; }
+    public virtual DbSet<RoomType> RoomTypes { get; set; }
 
+    public virtual DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,12 +68,12 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("total_amount");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.HasOne(d => d.Booking).WithMany(p => p.Bill)
+            entity.HasOne(d => d.Booking).WithMany(p => p.Bills)
                 .HasForeignKey(d => d.BookingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__bill__booking_id__73BA3083");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Bill)
+            entity.HasOne(d => d.User).WithMany(p => p.Bills)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__bill__user_id__74AE54BC");
@@ -105,7 +106,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("decimal(12, 2)")
                 .HasColumnName("unit_price");
 
-            entity.HasOne(d => d.Bill).WithMany(p => p.BillDetail)
+            entity.HasOne(d => d.Bill).WithMany(p => p.BillDetails)
                 .HasForeignKey(d => d.BillId)
                 .HasConstraintName("fk_bill_detail_bill");
         });
@@ -154,12 +155,12 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("total_price");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
 
-            entity.HasOne(d => d.Client).WithMany(p => p.Booking)
+            entity.HasOne(d => d.Client).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.ClientId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__booking__updated__66603565");
 
-            entity.HasOne(d => d.Room).WithMany(p => p.Booking)
+            entity.HasOne(d => d.Room).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.RoomId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__booking__room_id__6754599E");
@@ -187,6 +188,38 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(10)
                 .IsUnicode(false)
                 .HasColumnName("phone_number");
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__refresh___3213E83F0731EEB3");
+
+            entity.ToTable("refresh_tokens");
+
+            entity.HasIndex(e => e.Token, "IX_RefreshTokens_Token").IsUnique();
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("created_at");
+            entity.Property(e => e.ExpiresAt)
+                .HasColumnType("datetime")
+                .HasColumnName("expires_at");
+            entity.Property(e => e.Revoked)
+                .HasDefaultValue(false)
+                .HasColumnName("revoked");
+            entity.Property(e => e.Token)
+                .HasMaxLength(500)
+                .HasColumnName("token");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.User).WithMany(p => p.RefreshTokens)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__refresh_t__user___09A971A2");
         });
 
         modelBuilder.Entity<Room>(entity =>
@@ -221,7 +254,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
 
-            entity.HasOne(d => d.RoomType).WithMany(p => p.Room)
+            entity.HasOne(d => d.RoomType).WithMany(p => p.Rooms)
                 .HasForeignKey(d => d.RoomTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__room__updated_at__5812160E");

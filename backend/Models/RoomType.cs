@@ -35,5 +35,5 @@ public partial class RoomType
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual ICollection<Room> Room { get; set; } = new List<Room>();
+    public virtual ICollection<Room> Rooms { get; set; } = new List<Room>();
 }

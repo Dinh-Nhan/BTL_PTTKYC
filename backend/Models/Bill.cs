@@ -23,7 +23,7 @@ public partial class Bill
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual ICollection<BillDetail> BillDetail { get; set; } = new List<BillDetail>();
+    public virtual ICollection<BillDetail> BillDetails { get; set; } = new List<BillDetail>();
 
     public virtual Booking Booking { get; set; } = null!;
 

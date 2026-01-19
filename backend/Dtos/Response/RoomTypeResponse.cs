@@ -2,6 +2,8 @@
 {
     public class RoomTypeResponse
     {
+        public int RoomTypeId { get; set; }
+
         public string TypeName { get; set; } = null!;
 
         public string? Description { get; set; }
