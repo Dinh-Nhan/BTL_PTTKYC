@@ -1,6 +1,6 @@
-import Header from "@/components/Header";
-import RoomListing from "@/components/RoomListing";
-import SearchPanel from "@/components/SearchPanel";
+import Header from "@/components/client/Header";
+import RoomListing from "@/components/client/RoomListing";
+import SearchPanel from "@/components/client/SearchPanel";
 import { useState } from "react";
 
 const Home = () => {

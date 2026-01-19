@@ -1,7 +1,7 @@
 import { useState } from "react";
 import FilterSidebar from "./FilterSidebar";
 import RoomCard from "./RoomCard";
-import { Card } from "./ui/card";
+import { Card } from "../ui/card";
 
 interface RoomListingProps {
   searchParams: any;

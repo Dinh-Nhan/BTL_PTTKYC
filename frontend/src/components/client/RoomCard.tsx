@@ -1,8 +1,8 @@
 import { useState } from "react";
 import BookingModal from "./BookingModal";
 import { Star } from "lucide-react";
-import { Card } from "./ui/card";
-import { formatVND } from "@/utils/format";
+import { formatVND } from "@/lib/format";
+import { Card } from "../ui/card";
 
 interface RoomCardProps {
   room: {
