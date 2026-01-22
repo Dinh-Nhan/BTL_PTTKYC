@@ -422,11 +422,11 @@ export const dashboardStats = {
 
 // Weekly bookings data for chart
 export const weeklyBookings = [
-  { day: "Mon", bookings: 4 },
-  { day: "Tue", bookings: 6 },
-  { day: "Wed", bookings: 5 },
-  { day: "Thu", bookings: 8 },
-  { day: "Fri", bookings: 12 },
-  { day: "Sat", bookings: 15 },
-  { day: "Sun", bookings: 10 },
+  { day: "Thứ Hai", bookings: 4 },
+  { day: "Thứ Ba", bookings: 6 },
+  { day: "Thứ Tư", bookings: 5 },
+  { day: "Thứ Năm", bookings: 8 },
+  { day: "Thứ Sáu", bookings: 12 },
+  { day: "Thứ Bảy", bookings: 15 },
+  { day: "Chủ nhật", bookings: 10 },
 ];
