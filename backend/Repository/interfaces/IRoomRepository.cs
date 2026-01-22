@@ -1,0 +1,22 @@
+﻿using backend.Models;
+
+namespace backend.Repository.interfaces
+{
+    public interface IRoomRepository
+    {
+        Task<IEnumerable<Room>> GetAllRoomsAsync();
+
+        // cập nhật trạng thái phòng thành không hoạt động
+        bool deactiveRoom(int roomId);
+
+        bool activeRoom(int roomId);
+
+        Room? getById(int roomId);
+
+        Room? updateRoom(Room update);
+
+        Room? GetByIdWithRoomType(int roomId);
+
+        Task<IEnumerable<Room>> listRoomAvailable();
+    }
+}
