@@ -7,11 +7,13 @@ namespace backend.Service.interfaces
     public interface IUserService
     {
         ApiResponse<User> validateUser(LoginRequest request);
-        List<User> getAllStaff();
-
-        User CreateStaff(User staff);
-        User Update(User user);
-        bool DeleteStaff(int userId);
-
+        Task<ApiResponse<List<UserResponse>>> SearchEmployeeByFullName(string fullName);
+        Task<ApiResponse<bool>> DeleteEmployee(int userId);
+        Task<ApiResponse<UserResponse>> CreateEmployee(CreateEmployeeRequest user);
+        Task<ApiResponse<UserResponse>> UpdateEmployee(int id, UpdateEmployeeRequest user);
+        Task<ApiResponse<List<UserResponse>>> GetAllUser();
+        Task<ApiResponse<List<UserResponse>>> SearchUserByFullName(string fullName);
+        Task<ApiResponse<bool>> DeactiveUser(int userId);
+        Task<ApiResponse<bool>> ActiveUser(int userId);
     }
 }

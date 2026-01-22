@@ -1,4 +1,4 @@
-﻿namespace backend.Dtos.Response
+namespace backend.Dtos.Response
 {
     public class ClientResponse
     {
@@ -7,5 +7,8 @@
         public string PhoneNumber { get; set; } = null!;
 
         public string Email { get; set; } = null!;
+
+        public DateTime? CreatedAt { get; set; }
+
     }
 }
