@@ -25,7 +25,7 @@ const statusStyles = {
   cancelled: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
-const BookingTable = ({ bookings, onView, onCancel }: BookingsTableProps) => {
+const BookingsTable = ({ bookings, onView, onCancel }: BookingsTableProps) => {
   return (
     <Card className="border shadow-sm">
       <CardContent className="p-0">
@@ -103,4 +103,4 @@ const BookingTable = ({ bookings, onView, onCancel }: BookingsTableProps) => {
   );
 };
 
-export default BookingTable;
+export default BookingsTable;

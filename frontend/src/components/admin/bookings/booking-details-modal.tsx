@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Booking } from "@/lib/mock-data";
+import { useState } from "react";
 
 interface BookingDetailsModalProps {
   booking: Booking | null;
