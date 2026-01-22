@@ -13,6 +13,10 @@ namespace backend.Repository.interfaces
 
         Room? getById(int roomId);
 
-        Room updateRoom(int roomId, Room update);
+        Room? updateRoom(Room update);
+
+        Room? GetByIdWithRoomType(int roomId);
+
+        Task<IEnumerable<Room>> listRoomAvailable();
     }
 }

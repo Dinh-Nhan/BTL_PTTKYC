@@ -44,6 +44,11 @@ namespace backend.Controllers
             return StatusCode(response.statusCode, response);
         }
 
-        
+        [HttpGet("available")]
+        public async Task<IActionResult> ListRoomAvailble()
+        {
+            var response = await _roomService.listRoomAvailable();
+            return StatusCode(response.statusCode, response);
+        }
     }
 }

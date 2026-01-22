@@ -28,4 +28,6 @@ public partial class Bill
     public virtual Booking Booking { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;
+
+    public virtual ICollection<VnpayTransaction> VnpayTransactions { get; set; } = new List<VnpayTransaction>();
 }

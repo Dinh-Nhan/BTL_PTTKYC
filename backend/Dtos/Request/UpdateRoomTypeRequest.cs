@@ -2,6 +2,7 @@
 {
     public class updateRoomTypeRequest
     {
+
         public string TypeName { get; set; } = null!;
 
         public string? Description { get; set; }

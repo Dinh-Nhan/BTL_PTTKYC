@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Azure;
 using backend.Dtos.Response;
 using backend.Mappings;
 using backend.Models;
@@ -15,11 +16,17 @@ namespace backend.Service.implementations
         private readonly IApiResponseFactory _apiResponseFactory;
 
         private readonly IMapper _mapper;
-        public RoomService(IRoomRepository roomRepository, IApiResponseFactory apiResponseFactory, IMapper mapper)
+
+        private readonly ILogger<RoomService> _logger;
+        public RoomService(IRoomRepository roomRepository,
+            IApiResponseFactory apiResponseFactory,
+            IMapper mapper,
+            ILogger<RoomService> logger)
         {
             _roomRepository = roomRepository;
             _apiResponseFactory = apiResponseFactory;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public ApiResponse<bool> activeRoom(int roomId)
@@ -107,6 +114,26 @@ namespace backend.Service.implementations
             }
 
             return _apiResponseFactory.Success(room);
+        }
+
+        public async Task<ApiResponse<List<RoomResponse>>> listRoomAvailable()
+        {
+            try
+            {
+                var result = await _roomRepository.listRoomAvailable();
+
+                var response = result.Select(r => _mapper.Map<RoomResponse>(r)).ToList();
+                return _apiResponseFactory.Success(response);
+            }
+            catch(Exception e)
+            {
+                _logger.LogError("Error Message: " + e.Message);
+
+                return _apiResponseFactory.Fail<List<RoomResponse>>(
+                    StatusCodes.Status400BadRequest,
+                    "An error occurred while retrieving the data!"
+                );
+            }
         }
     }
 }

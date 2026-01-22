@@ -53,9 +53,27 @@ namespace backend.Repository.implementations
             return _context.Rooms.Find(roomId);
         }
 
-        public Room updateRoom(int roomId, Room update)
+        public Room? GetByIdWithRoomType(int roomId)
         {
-            return null;
+            return _context.Rooms
+                .Include(r => r.RoomType)
+                .FirstOrDefault(r => r.RoomId == roomId);
+        }
+
+        public async Task<IEnumerable<Room>> listRoomAvailable()
+        {
+            return await _context.Rooms
+                        .Include(r => r.RoomType)
+                        .Where(s => s.Status == "AVAILABLE")
+                        .ToListAsync();
+        }
+
+        public Room? updateRoom(Room update)
+        {
+            update.UpdatedAt = DateTime.Now;
+            var updatedRoom = _context.Rooms.Update(update);
+            _context.SaveChanges();
+            return updatedRoom.Entity;
         }
     }
 }

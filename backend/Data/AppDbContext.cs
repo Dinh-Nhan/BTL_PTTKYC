@@ -32,6 +32,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<VnpayTransaction> VnpayTransactions { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Bill>(entity =>
@@ -353,6 +355,79 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+        });
+
+        modelBuilder.Entity<VnpayTransaction>(entity =>
+        {
+            entity.HasKey(e => e.VnpayId).HasName("PK__vnpay_tr__5AE561718D286A17");
+
+            entity.ToTable("vnpay_transaction");
+
+            entity.HasIndex(e => e.VnpTxnRef, "uq_vnp_txnref").IsUnique();
+
+            entity.Property(e => e.VnpayId).HasColumnName("vnpay_id");
+            entity.Property(e => e.BillId).HasColumnName("bill_id");
+            entity.Property(e => e.BookingId).HasColumnName("booking_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnName("created_at");
+            entity.Property(e => e.IsValidSignature).HasColumnName("is_valid_signature");
+            entity.Property(e => e.PaymentStatus)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("PENDING")
+                .HasColumnName("payment_status");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.VnpAmount).HasColumnName("vnp_Amount");
+            entity.Property(e => e.VnpBankCode)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("vnp_BankCode");
+            entity.Property(e => e.VnpCardType)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("vnp_CardType");
+            entity.Property(e => e.VnpCurrencyCode)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasDefaultValue("VND")
+                .HasColumnName("vnp_CurrencyCode");
+            entity.Property(e => e.VnpMessage)
+                .HasMaxLength(255)
+                .HasColumnName("vnp_Message");
+            entity.Property(e => e.VnpPayDate)
+                .HasMaxLength(14)
+                .IsUnicode(false)
+                .HasColumnName("vnp_PayDate");
+            entity.Property(e => e.VnpResponseCode)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("vnp_ResponseCode");
+            entity.Property(e => e.VnpSecureHash)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("vnp_SecureHash");
+            entity.Property(e => e.VnpTransactionNo)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("vnp_TransactionNo");
+            entity.Property(e => e.VnpTransactionStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("vnp_TransactionStatus");
+            entity.Property(e => e.VnpTxnRef)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("vnp_TxnRef");
+
+            entity.HasOne(d => d.Bill).WithMany(p => p.VnpayTransactions)
+                .HasForeignKey(d => d.BillId)
+                .HasConstraintName("FK__vnpay_tra__bill___1BC821DD");
+
+            entity.HasOne(d => d.Booking).WithMany(p => p.VnpayTransactions)
+                .HasForeignKey(d => d.BookingId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__vnpay_tra__booki__1AD3FDA4");
         });
 
         OnModelCreatingPartial(modelBuilder);

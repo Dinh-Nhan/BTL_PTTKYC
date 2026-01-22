@@ -40,4 +40,6 @@ public partial class Booking
     public virtual Client Client { get; set; } = null!;
 
     public virtual Room Room { get; set; } = null!;
+
+    public virtual ICollection<VnpayTransaction> VnpayTransactions { get; set; } = new List<VnpayTransaction>();
 }

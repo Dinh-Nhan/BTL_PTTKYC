@@ -10,5 +10,7 @@ namespace backend.Service.interfaces
         ApiResponse<bool> activeRoom(int roomId);
 
         ApiResponse<Room> getById(int roomId);
+
+        Task<ApiResponse<List<RoomResponse>>> listRoomAvailable();
     }
 }
