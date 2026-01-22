@@ -36,6 +36,19 @@ namespace backend.Service.implementations
             }
         }
 
+        public async Task<ApiResponse<List<ClientResponse>>> GetAllClientsAsync()
+        {
+            var clients = await  _clientRepository.GetAllClientsAsync();
+            if(clients == null)
+            {
+                return _apiResponseFactory.Fail<List<ClientResponse>>(
+                    StatusCodes.Status404NotFound,
+                    "No clients found"
+                 );
+            }
+            return _apiResponseFactory.Success(clients);
+        }
+
         public async Task<ApiResponse<List<ClientResponse>>> GetClientByFullNameOrEmailAsync(string information)
         {
             if (string.IsNullOrWhiteSpace(information))
@@ -47,7 +60,7 @@ namespace backend.Service.implementations
             }
 
             var client = await _clientRepository.GetClientByFullNameOrEmailAsync(information);
-            if (client == null)
+            if (client == null || !client.Any())
             {
                 return _apiResponseFactory.Fail<List<ClientResponse>>(
                         StatusCodes.Status404NotFound,

@@ -6,5 +6,6 @@ namespace backend.Service.interfaces
     {
         Task<ApiResponse<List<ClientResponse>>> GetClientByFullNameOrEmailAsync(string information);
         ApiResponse<bool> DeleteClient(int clientId);
+        Task<ApiResponse<List<ClientResponse>>> GetAllClientsAsync();
     }
 }

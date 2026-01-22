@@ -6,5 +6,6 @@ namespace backend.Repository.interfaces
     {
         Task<List<ClientResponse>?> GetClientByFullNameOrEmailAsync(string information);
         bool DeleteClient(int clientId);
+        Task<List<ClientResponse>> GetAllClientsAsync();
     }
 }

@@ -26,6 +26,20 @@ namespace backend.Repository.implementations
             return _context.SaveChanges() > 0;
         }
 
+        public async Task<List<ClientResponse>> GetAllClientsAsync()
+        {
+            var clients = await _context.Client
+                .Select(c => new ClientResponse
+                {
+                    FullName = c.FullName,
+                    PhoneNumber = c.PhoneNumber,
+                    Email = c.Email,
+                    CreatedAt = c.CreatedAt
+                })
+                .ToListAsync();
+            return clients;
+        }
+
         public async Task<List<ClientResponse>?> GetClientByFullNameOrEmailAsync(string information)
         {
             if (string.IsNullOrWhiteSpace(information))

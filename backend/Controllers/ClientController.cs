@@ -28,5 +28,12 @@ namespace backend.Controllers
             var response = _clientService.DeleteClient(id);
             return StatusCode(response.statusCode, response);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllClientsAsync()
+        {
+            var response = await _clientService.GetAllClientsAsync();
+            return StatusCode(response.statusCode, response);
+        }
     }
 }
