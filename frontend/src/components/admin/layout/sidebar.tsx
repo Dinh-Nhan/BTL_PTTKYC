@@ -35,7 +35,12 @@ const menuItems = [
     icon: Receipt,
     adminOnly: false,
   },
-  { href: "/staff", label: "Staff Management", icon: UserCog, adminOnly: true },
+  {
+    href: "/staff",
+    label: "Quản lý nhân viên",
+    icon: UserCog,
+    adminOnly: true,
+  },
   {
     href: "/customers",
     label: "Quản lý khách hàng",
