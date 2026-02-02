@@ -468,6 +468,13 @@ namespace backend.Service.implementations
         {
             try
             {
+                //if(vnpayTransaction == null)
+                //{
+                //    return _apiResponseFactory.Fail<BookingResponse>(
+                //        StatusCodes.Status404NotFound,
+                //        $"the payment is cancelled!"
+                //    );
+                //}
                 var booking = await _bookingRepository.GetById(vnpayTransaction.BookingId);
 
                 if (booking == null)
@@ -554,41 +561,292 @@ namespace backend.Service.implementations
             }
         }
 
-        public async Task<ApiResponse<QueryTransactionResponse>> createQuerydrTransaction(int bookingId, string ipAddress)
+        public async Task<ApiResponse<VnpayQueryResponse>> QueryTransactionStatus(int bookingId, string ipAddress)
         {
-            if(bookingId <= 0 || string.IsNullOrEmpty(ipAddress))
+            try
             {
-                return _apiResponseFactory.Fail<QueryTransactionResponse>(
-                    StatusCodes.Status400BadRequest,
-                    "Invalid data request"
+                if (bookingId <= 0 || string.IsNullOrEmpty(ipAddress))
+                {
+                    return _apiResponseFactory.Fail<VnpayQueryResponse>(
+                        StatusCodes.Status400BadRequest,
+                        "Invalid data request"
+                    );
+                }
+
+                // 1. Lấy booking và transaction từ DB
+                var booking = await _bookingRepository.GetById(bookingId);
+                if (booking == null)
+                {
+                    return _apiResponseFactory.Fail<VnpayQueryResponse>(
+                        StatusCodes.Status404NotFound,
+                        $"Booking {bookingId} not found"
+                    );
+                }
+
+                var vnpayTransaction = await _vnpayTransactionService.getByBookingId(bookingId);
+                if (vnpayTransaction == null)
+                {
+                    return _apiResponseFactory.Fail<VnpayQueryResponse>(
+                        StatusCodes.Status404NotFound,
+                        $"No payment transaction found for booking {bookingId}"
+                    );
+                }
+
+                // 2. Gửi query request tới VNPay
+                var queryResult = await _vnpayService.QueryTransaction(
+                    vnpayTransaction,
+                    $"Booking{booking.BookingId}",
+                    ipAddress
                 );
+
+                if (queryResult == null || queryResult.vnp_ResponseCode != "00")
+                {
+                    return _apiResponseFactory.Fail<VnpayQueryResponse>(
+                        StatusCodes.Status500InternalServerError,
+                        $"Failed to query transaction: {queryResult?.vnp_Message}"
+                    );
+                }
+
+                // 3. Cập nhật trạng thái nếu có thay đổi
+                if (queryResult.vnp_TransactionStatus != vnpayTransaction.VnpTransactionStatus)
+                {
+                    await _unitOfWork.BeginTransactionAsync();
+                    try
+                    {
+                        vnpayTransaction.VnpTransactionStatus = queryResult.vnp_TransactionStatus;
+                        //await _vnpayTransactionService.UpdateTransaction(vnpayTransaction);
+
+                        await _unitOfWork.CommitTransactionAsync();
+
+                        _logger.LogInformation(
+                            "Updated transaction status for booking {BookingId}: {Status}",
+                            bookingId,
+                            queryResult.vnp_TransactionStatus
+                        );
+                    }
+                    catch
+                    {
+                        await _unitOfWork.RollbackTransactionAsync();
+                        throw;
+                    }
+                }
+
+                return _apiResponseFactory.Success(queryResult, "Transaction status retrieved successfully");
             }
-
-            var booking = await _bookingRepository.GetById(bookingId);
-            var vnpayTransaction = await _vnpayTransactionService.getByBookingId(bookingId);
-            
-            if(booking == null || vnpayTransaction == null)
+            catch (Exception ex)
             {
-                return _apiResponseFactory.Fail<QueryTransactionResponse>(
-                    StatusCodes.Status404NotFound,
-                    "Booking or transaction not found"
-                );
-            }
-
-            var queryResult = _vnpayService.createQueryUrl(
-                        vnpayTransaction,
-                        $"Booking{booking.BookingId}",
-                        ipAddress
-            );
-
-            if(queryResult == null)
-            {
-                return _apiResponseFactory.Fail<QueryTransactionResponse>(
+                _logger.LogError(ex, "Error querying transaction status for booking {BookingId}", bookingId);
+                return _apiResponseFactory.Fail<VnpayQueryResponse>(
                     StatusCodes.Status500InternalServerError,
-                    "Failed to create query url"
+                    $"Error querying transaction: {ex.Message}"
                 );
             }
-            return _apiResponseFactory.Success(new QueryTransactionResponse { querydrUrl = queryResult}, "Query URL created successfully");
         }
+
+        public async Task<ApiResponse<RefundResponse>> RefundBooking(RefundRequest request, string ipAddress)
+        {
+            try
+            {
+                // 1. Validate input
+                if (request == null || request.BookingId <= 0)
+                {
+                    return _apiResponseFactory.Fail<RefundResponse>(
+                        StatusCodes.Status400BadRequest,
+                        "Invalid refund request"
+                    );
+                }
+
+                // 2. Lấy booking và transaction từ DB
+                var booking = await _bookingRepository.GetByIdWithDetails(request.BookingId);
+                if (booking == null)
+                {
+                    return _apiResponseFactory.Fail<RefundResponse>(
+                        StatusCodes.Status404NotFound,
+                        $"Booking {request.BookingId} not found"
+                    );
+                }
+
+                var vnpayTransaction = await _vnpayTransactionService.getByBookingId(request.BookingId);
+                if (vnpayTransaction == null)
+                {
+                    return _apiResponseFactory.Fail<RefundResponse>(
+                        StatusCodes.Status404NotFound,
+                        $"No payment transaction found for booking {request.BookingId}"
+                    );
+                }
+
+                // 3. Validate refund eligibility
+                var validation = ValidateRefundEligibility(booking, vnpayTransaction);
+                if (!validation.IsValid)
+                {
+                    return _apiResponseFactory.Fail<RefundResponse>(
+                        StatusCodes.Status400BadRequest,
+                        validation.ErrorMessage
+                    );
+                }
+
+                // 4. Query VNPay trước để đảm bảo giao dịch vẫn hợp lệ
+                //var queryResult = await _vnpayService.QueryTransaction(
+                //    vnpayTransaction,
+                //    $"Booking{booking.BookingId}",
+                //    ipAddress
+                //);
+
+                //if (queryResult == null || queryResult.vnp_ResponseCode != "00")
+                //{
+                //    return _apiResponseFactory.Fail<RefundResponse>(
+                //        StatusCodes.Status500InternalServerError,
+                //        $"Cannot verify transaction status: {queryResult?.vnp_Message}"
+                //    );
+                //}
+
+                //// Kiểm tra trạng thái giao dịch
+                //if (queryResult.vnp_TransactionStatus != "00")
+                //{
+                //    return _apiResponseFactory.Fail<RefundResponse>(
+                //        StatusCodes.Status400BadRequest,
+                //        $"Transaction is not successful. Status: {queryResult.vnp_TransactionStatus}"
+                //    );
+                //}
+
+                // 5. Gửi yêu cầu hoàn tiền tới VNPay
+                var refundResult = await _vnpayService.RefundTransaction(
+                    vnpayTransaction,
+                    $"Refund for Booking{booking.BookingId} - Reason: {request.Reason}",
+                    request.RequestedBy ?? "System",
+                    ipAddress
+                );
+
+                if (refundResult == null || refundResult.vnp_ResponseCode != "00")
+                {
+                    _logger.LogWarning(
+                        "Refund failed for booking {BookingId}. VNPay response: {Response}",
+                        request.BookingId,
+                        refundResult?.vnp_Message
+                    );
+
+                    return _apiResponseFactory.Fail<RefundResponse>(
+                        StatusCodes.Status400BadRequest,
+                        $"Refund request failed: {refundResult?.vnp_Message}"
+                    );
+                }
+
+                // 6. Cập nhật database
+                await _unitOfWork.BeginTransactionAsync();
+                try
+                {
+                    // Cập nhật booking
+                    booking.Status = "REFUNDED";
+                    booking.PaymentStatus = "REFUNDED";
+                    booking.Note = $"Hoàn tiền 100% - Lý do: {request.Reason} - By: {request.RequestedBy}";
+                    booking.UpdatedAt = DateTime.UtcNow;
+                    await _bookingRepository.Update(booking);
+
+                    // Cập nhật room về AVAILABLE
+                    var room = _roomRepository.getById(booking.RoomId);
+                    if (room != null && room.Status == "BOOKED")
+                    {
+                        UpdateRoomStatus(room, "AVAILABLE");
+                        _roomRepository.updateRoom(room);
+                    }
+
+                    // Lưu thông tin hoàn tiền vào transaction
+                    vnpayTransaction.VnpTransactionStatus = refundResult.vnp_TransactionStatus;
+                    vnpayTransaction.PaymentStatus = "REFUNDED";
+                    //await _vnpayTransactionService.UpdateTransaction(vnpayTransaction);
+
+                    await _unitOfWork.CommitTransactionAsync();
+
+                    _logger.LogInformation(
+                        "Refund successful for booking {BookingId}. Amount: {Amount}. VNPay Transaction: {TxnNo}",
+                        request.BookingId,
+                        vnpayTransaction.VnpAmount,
+                        refundResult.vnp_TransactionNo
+                    );
+
+                    var response = new RefundResponse
+                    {
+                        BookingId = request.BookingId,
+                        RefundAmount = vnpayTransaction.VnpAmount,
+                        RefundStatus = "SUCCESS",
+                        Message = "Refund processed successfully. Money will be returned within 3-5 business days.",
+                        VnpTransactionNo = refundResult.vnp_TransactionNo
+                    };
+
+                    return _apiResponseFactory.Success(response, "Refund processed successfully");
+                }
+                catch (Exception ex)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+
+                    _logger.LogError(
+                        ex,
+                        "Error updating database after successful refund for booking {BookingId}",
+                        request.BookingId
+                    );
+
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing refund for booking {BookingId}", request?.BookingId);
+
+                return _apiResponseFactory.Fail<RefundResponse>(
+                    StatusCodes.Status500InternalServerError,
+                    $"Error processing refund: {ex.Message}"
+                );
+            }
+        }
+
+        #region helper method
+        private (bool IsValid, string ErrorMessage) ValidateRefundEligibility(
+            Booking booking,
+            VnpayTransaction transaction)
+        {
+            // 1. Kiểm tra trạng thái booking
+            if (booking.Status == "REFUNDED")
+            {
+                return (false, "This booking has already been refunded");
+            }
+
+            if (booking.Status == "CANCELLED")
+            {
+                return (false, "This booking has been cancelled");
+            }
+
+            if (booking.Status == "CHECKED_OUT")
+            {
+                return (false, "Cannot refund completed bookings");
+            }
+
+            if (booking.PaymentStatus != "PARTIAL" && booking.PaymentStatus != "SUCCESS")
+            {
+                return (false, $"Cannot refund unpaid booking. Payment status: {booking.PaymentStatus}");
+            }
+
+            // 2. Kiểm tra trạng thái giao dịch
+            if (transaction.PaymentStatus == "REFUNDED")
+            {
+                return (false, "Transaction has already been refunded");
+            }
+
+            // 3. Kiểm tra thời gian - CHỈ hoàn 100% nếu trước 3 ngày check-in
+            var daysUntilCheckIn = (booking.CheckInDatetime.Date - DateTime.UtcNow.Date).Days;
+
+            if (daysUntilCheckIn < 3)
+            {
+                return (false, $"Refund is only available 3 or more days before check-in. Days remaining: {daysUntilCheckIn}");
+            }
+
+            // 4. Kiểm tra đã checkin chưa
+            if (booking.CheckInDatetime.Date <= DateTime.UtcNow.Date)
+            {
+                return (false, "Cannot refund after check-in date");
+            }
+
+            return (true, null);
+        }
+        #endregion
     }
 }

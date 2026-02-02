@@ -14,9 +14,6 @@ namespace backend.Repository.implementations
             _context = context;
         }
 
-        /// <summary>
-        /// Get token for read-only operations (không track)
-        /// </summary>
         public RefreshToken? GetByToken(string token)
         {
             return _context.RefreshTokens
@@ -24,21 +21,17 @@ namespace backend.Repository.implementations
                 .FirstOrDefault(rt => rt.Token == token);
         }
 
-        /// <summary>
-        /// Get token for update operations (có tracking)
-        /// </summary>
+
         public RefreshToken? GetByTokenForUpdate(string token)
         {
             return _context.RefreshTokens
                 .FirstOrDefault(rt => rt.Token == token);
         }
 
-        /// <summary>
-        /// Create new refresh token
-        /// </summary>
+
         public void Create(RefreshToken refreshToken)
         {
-            // Generate new GUID nếu chưa có
+            // Generate GUID nếu chưa có
             if (refreshToken.Id == Guid.Empty)
             {
                 refreshToken.Id = Guid.NewGuid();
@@ -54,17 +47,11 @@ namespace backend.Repository.implementations
             _context.SaveChanges();
         }
 
-        /// <summary>
-        /// Save changes for tracked entities
-        /// </summary>
+
         public void SaveChanges()
         {
             _context.SaveChanges();
         }
-
-        /// <summary>
-        /// Revoke all active tokens của user
-        /// </summary>
         public void RevokeAllByUserId(int userId)
         {
             var activeTokens = _context.RefreshTokens
@@ -81,10 +68,6 @@ namespace backend.Repository.implementations
                 _context.SaveChanges();
             }
         }
-
-        /// <summary>
-        /// Delete expired tokens (cleanup job)
-        /// </summary>
         public void DeleteExpiredTokens()
         {
             var expiredTokens = _context.RefreshTokens

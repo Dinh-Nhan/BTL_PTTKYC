@@ -9,14 +9,15 @@ namespace backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN")]
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
-
-        public BookingController(IBookingService bookingService)
+        private readonly ILogger<BookingController> _logger;
+        public BookingController(IBookingService bookingService, ILogger<BookingController> logger)
         {
             _bookingService = bookingService;
+            _logger = logger;
         }
 
 
@@ -26,7 +27,6 @@ namespace backend.Controllers
         {
             // lấy địa chỉ IP của client
             var ipAddress = GetClientIPv4Address();
-            Console.WriteLine("ip address: " + ipAddress);
 
             var response = await _bookingService.CreateBookingForClient(request, ipAddress);
             
@@ -37,6 +37,7 @@ namespace backend.Controllers
         public async Task<IActionResult> getAllBooking()
         {
             var response = await _bookingService.GetAllBookings();
+
             return StatusCode(response.statusCode, response);
         }
 
@@ -45,6 +46,7 @@ namespace backend.Controllers
         public async Task<IActionResult> getBookingById(int bookingId)
         {
             var response = await _bookingService.GetBookingById(bookingId);
+
             return StatusCode(response.statusCode, response);
         }
 
@@ -55,14 +57,142 @@ namespace backend.Controllers
             return StatusCode(response.statusCode, response);
         }
 
-        [HttpPost("querydr/{bookingId}")]
-        public async Task<IActionResult> querydrTransaction(int bookingId)
+        /// <summary>
+        /// Truy vấn trạng thái giao dịch thanh toán từ VNPay
+        /// </summary>
+        /// <param name="bookingId">ID của booking cần truy vấn</param>
+        /// <returns>Thông tin chi tiết giao dịch từ VNPay</returns>
+        [HttpGet("query-transaction/{bookingId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> QueryTransactionStatus(int bookingId)
         {
-            var ipAddress = GetClientIPv4Address();
-            var response = await _bookingService.createQuerydrTransaction(bookingId, ipAddress);
-            
-            return StatusCode(response.statusCode, response);
+            try
+            {
+                var ipAddress = GetClientIPv4Address();
+
+                _logger.LogInformation(
+                    "Querying transaction status for booking {BookingId} from IP {IpAddress}",
+                    bookingId,
+                    ipAddress
+                );
+
+                var response = await _bookingService.QueryTransactionStatus(bookingId, ipAddress);
+
+                return StatusCode(response.statusCode, response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in QueryTransactionStatus endpoint for booking {BookingId}", bookingId);
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = $"Internal server error: {ex.Message}"
+                });
+            }
         }
+
+        // ============================================
+        // REFUND BOOKING
+        // ============================================
+
+        /// <summary>
+        /// Yêu cầu hoàn tiền 100% cho booking
+        /// Điều kiện: Phải trước 3 ngày check-in
+        /// </summary>
+        /// <param name="request">Thông tin yêu cầu hoàn tiền</param>
+        /// <returns>Kết quả xử lý hoàn tiền</returns>
+        [HttpPost("refund")]
+        [AllowAnonymous] // Có thể thay bằng [Authorize] nếu cần xác thực
+        public async Task<IActionResult> RefundBooking([FromBody] RefundRequest request)
+        {
+            try
+            {
+                if (request == null)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Invalid request body"
+                    });
+                }
+
+                var ipAddress = GetClientIPv4Address();
+
+                _logger.LogInformation(
+                    "Processing refund request for booking {BookingId}. Requested by: {RequestedBy}, Reason: {Reason}",
+                    request.BookingId,
+                    request.RequestedBy,
+                    request.Reason
+                );
+
+                var response = await _bookingService.RefundBooking(request, ipAddress);
+
+                return StatusCode(response.statusCode, response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in RefundBooking endpoint for booking {BookingId}", request?.BookingId);
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = $"Internal server error: {ex.Message}"
+                });
+            }
+        }
+
+        [HttpGet("check-refund-eligibility/{bookingId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> CheckRefundEligibility(int bookingId)
+        {
+            try
+            {
+                var booking = await _bookingService.GetBookingById(bookingId);
+
+                if (booking.statusCode != 200 || booking.result == null)
+                {
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = $"Booking {bookingId} not found"
+                    });
+                }
+
+                var bookingData = booking.result;
+                var daysUntilCheckIn = (bookingData.CheckInDatetime.Date - DateTime.UtcNow.Date).Days;
+
+                bool isEligible = daysUntilCheckIn >= 3
+                    && bookingData.Status != "REFUNDED"
+                    && bookingData.Status != "CANCELLED"
+                    && bookingData.Status != "CHECKED_OUT"
+                    && (bookingData.PaymentStatus == "PARTIAL" || bookingData.PaymentStatus == "SUCCESS");
+
+                return Ok(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        bookingId = bookingId,
+                        isEligible = isEligible,
+                        daysUntilCheckIn = daysUntilCheckIn,
+                        currentStatus = bookingData.Status,
+                        paymentStatus = bookingData.PaymentStatus,
+                        message = isEligible
+                            ? "This booking is eligible for 100% refund"
+                            : $"This booking is not eligible for refund. Days until check-in: {daysUntilCheckIn}"
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking refund eligibility for booking {BookingId}", bookingId);
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = $"Internal server error: {ex.Message}"
+                });
+            }
+        }
+
 
         #region helper methods
         private string GetClientIPv4Address()

@@ -30,7 +30,8 @@ namespace backend.Controllers
             {
                 // Verify và parse payment result từ VNPay
                 var paymentResult = _vnpayService.ProcessPaymentCallback(Request.Query);
-                // 2. Xử lý cập nhật booking và room
+
+                //  Xử lý cập nhật booking và room
                 var result = await _bookingService.ProcessPaymentCallback(paymentResult);
 
                 // 3. Redirect về frontend với kết quả
@@ -48,10 +49,11 @@ namespace backend.Controllers
             }
         }
 
-        // Endpoint cho IPN (Instant Payment Notification) - VNPay gọi để confirm
+        // Endpoint cho IPN  - VNPay gọi để confirm
         [HttpGet("vnpay-ipn")]
         public async Task<IActionResult> VnpayIPN()
         {
+            _logger.LogInformation("Controller Vnpay method vnpay ipn..........");
             try
             {
                 var paymentResult = _vnpayService.ProcessPaymentCallback(Request.Query);

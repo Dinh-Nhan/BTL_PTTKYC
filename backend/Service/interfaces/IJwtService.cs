@@ -8,7 +8,7 @@ namespace backend.Service.interfaces
     {
         ApiResponse<LoginResponse> GenerateToken(LoginRequest request);
         ApiResponse<LoginResponse> RefreshToken();
-        ApiResponse<bool> Introspect(IntrospectRequest request);
+        ApiResponse<bool> Introspect();
         ApiResponse<bool> Logout();
 
         ApiResponse<UserResponse> getMe();

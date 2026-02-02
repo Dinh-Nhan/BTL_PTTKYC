@@ -14,6 +14,7 @@ namespace backend.Service.interfaces
         Task<ApiResponse<bool>> CancelBooking(int bookingId, CancelBookingRequest request);
         Task<ApiResponse<BookingResponse>> ProcessPaymentCallback(VnpayTransaction vnpayTransaction);
 
-        Task<ApiResponse<QueryTransactionResponse>> createQuerydrTransaction(int bookingId, string ipAddress);
+        Task<ApiResponse<RefundResponse>> RefundBooking(RefundRequest request, string ipAddress);
+        Task<ApiResponse<VnpayQueryResponse>> QueryTransactionStatus(int bookingId, string ipAddress);
     }
 }

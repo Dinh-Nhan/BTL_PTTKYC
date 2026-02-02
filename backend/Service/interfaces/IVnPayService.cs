@@ -1,4 +1,5 @@
-﻿using backend.Models;
+﻿using backend.Dtos.Response;
+using backend.Models;
 using backend.Service.implementations;
 
 namespace backend.Service.interfaces
@@ -7,6 +8,11 @@ namespace backend.Service.interfaces
     {
         string CreatePaymentUrl(long amount, string orderInfo, string ipAddress);
         VnpayTransaction? ProcessPaymentCallback(IQueryCollection queryParams);
-        string createQueryUrl(VnpayTransaction vnpayTransaction, string orderInfo, string ipAddress);
+        //string createQueryUrl(VnpayTransaction vnpayTransaction, string orderInfo, string ipAddress);
+
+        Task<VnpayQueryResponse> QueryTransaction(VnpayTransaction vnpayTransaction, string orderInfo, string ipAddress);
+
+        Task<VnpayRefundResponse> RefundTransaction(VnpayTransaction vnpayTransaction, string orderInfo, string createdBy, string ipAddress);
+
     }
 }

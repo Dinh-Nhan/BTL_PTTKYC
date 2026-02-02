@@ -22,7 +22,6 @@ namespace backend.Mappings
                 .ForMember(dest => dest.roomResponse, opt => opt.Ignore())
                 .ForMember(dest => dest.clientResponse, opt => opt.Ignore());
 
-            //.ForAllMembers()
         }
     }
 }

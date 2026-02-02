@@ -37,6 +37,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("Hotel")
     )
 );
+
+builder.Services.AddHttpClient();
+
+
 // Add services to the container.
 builder.Services.AddScoped<IApiResponseFactory, ApiResponseFactory>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -77,6 +81,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 
 app.UseHttpsRedirection();
 

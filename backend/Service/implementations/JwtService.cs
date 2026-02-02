@@ -215,9 +215,11 @@ namespace backend.Service.implementations
         }
 
 
-        public ApiResponse<bool> Introspect(IntrospectRequest request)
+        public ApiResponse<bool> Introspect()
         {
-            if (string.IsNullOrWhiteSpace(request.Token))
+            string token = GetAccessTokenFromHeader()!;
+
+            if (string.IsNullOrWhiteSpace(token))
             {
                 return _apiResponseFactory.Fail<bool>(
                     StatusCodes.Status400BadRequest,
@@ -230,7 +232,7 @@ namespace backend.Service.implementations
 
             try
             {
-                tokenHandler.ValidateToken(request.Token, new TokenValidationParameters
+                tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
@@ -253,9 +255,7 @@ namespace backend.Service.implementations
             }
         }
 
-        /// <summary>
         /// Logout và revoke refresh token
-        /// </summary>
         public ApiResponse<bool> Logout()
         {
             var userId = GetCurrentUserId();

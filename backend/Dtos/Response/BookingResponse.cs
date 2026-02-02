@@ -6,6 +6,8 @@ namespace backend.Dtos.Response
     {
         public ClientResponse clientResponse { get; set; } = null!;
 
+        public int bookingId { get; set; }
+
         [DataType(DataType.Date)]
         public DateTime CheckInDatetime { get; set; }
 
@@ -21,6 +23,10 @@ namespace backend.Dtos.Response
         public decimal? DepositAmount { get; set; }
 
         public string? Note { get; set; }
+
+        public string? Status { get; set; }
+        public string? PaymentStatus { get; set; }
+
 
         public RoomResponse roomResponse { get; set; } = null!;
 

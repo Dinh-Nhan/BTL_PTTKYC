@@ -33,9 +33,9 @@ namespace backend.Controllers
         }
 
         [HttpPost("introspect")]
-        public IActionResult Introspect([FromBody] IntrospectRequest request)
+        public IActionResult Introspect()
         {
-            var response = _jwtService.Introspect(request);
+            var response = _jwtService.Introspect();
             return StatusCode(response.statusCode, response);
         }
 
