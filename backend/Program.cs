@@ -64,6 +64,13 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IVnPayService, VnpayService>();
 builder.Services.AddScoped<IVnpayTransactionService, VnpayTransactionService>();
+builder.Services.AddScoped<IClientRepository, ClientRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
+builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
@@ -71,6 +78,17 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
@@ -82,6 +100,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 

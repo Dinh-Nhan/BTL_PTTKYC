@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Card } from "./ui/card";
 import { ChevronDown } from "lucide-react";
-import { Button } from "./ui/button";
+import { Card } from "../ui/card";
+import { Button } from "../ui/button";
 
 interface SearchPanelProps {
   onSearch: (params) => void;
