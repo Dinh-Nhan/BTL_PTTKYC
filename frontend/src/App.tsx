@@ -8,10 +8,9 @@ import { Route, Routes } from "react-router-dom";
 // import CustomerPage from "./pages/Manager/CustomerPage";
 
 import Login from "./pages/Login";
+import Home from "./pages/Home";
 const App = () => {
   return (
-    // <Home />
-
     // <Admin>
     //   <Routes>
     //     <Route path="/" element={<DashBoardPage/>} />
@@ -23,7 +22,8 @@ const App = () => {
     //   </Routes>
     // </Admin>
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Home />} />
+      {/* <Route path="/login" element={<Login />} /> */}
     </Routes>
   );
 };

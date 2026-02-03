@@ -2,17 +2,18 @@ import { useState } from "react";
 import { Card } from "../ui/card";
 import { X } from "lucide-react";
 
-interface BookingModalProps {
-  room: {
-    id: number;
-    name: string;
-    price: number;
-    image: string;
-  };
-  onClose: () => void;
-}
+// interface BookingModalProps {
+//   room: {
+//     id: number;
+//     name: string;
+//     price: number;
+//     image: string;
+//   };
+//   onClose: () => void;
+// }
 
-const BookingModal = ({ room, onClose }: BookingModalProps) => {
+const BookingModal = ({ room, onClose }) => {
+  console.log("room: ", room);
   const [step, setStep] = useState<"dates" | "details" | "payment">("dates");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
@@ -275,7 +276,7 @@ const BookingModal = ({ room, onClose }: BookingModalProps) => {
               }
               className="flex-1 rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {step === "payment" ? "Confirm Booking" : "Tiếp tục"}
+              {step === "payment" ? "Xác nhận đặt phòng" : "Tiếp tục"}
             </button>
           </div>
         </Card>

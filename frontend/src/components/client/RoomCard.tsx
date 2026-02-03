@@ -4,22 +4,7 @@ import { Star } from "lucide-react";
 import { formatVND } from "@/lib/format";
 import { Card } from "../ui/card";
 
-interface RoomCardProps {
-  room: {
-    id: number;
-    name: string;
-    description: string;
-    price: number;
-    rating: number;
-    reviews: number;
-    guests: number;
-    type: string;
-    image: string;
-    amenities: string[];
-  };
-}
-
-const RoomCard = ({ room }: RoomCardProps) => {
+const RoomCard = ({ room }) => {
   const [showBooking, setShowBooking] = useState(false);
 
   return (
@@ -45,7 +30,7 @@ const RoomCard = ({ room }: RoomCardProps) => {
                 </span>
               </div>
               <span className="text-xs text-muted-foreground">
-                ({room.reviews} bài đánh giá)
+                (1 bài đánh giá)
               </span>
             </div>
           </div>
@@ -74,7 +59,8 @@ const RoomCard = ({ room }: RoomCardProps) => {
 
           {/* Guests Info */}
           <div className="text-xs text-muted-foreground">
-            Tối đa {room.guests} khách
+            Tối đa {room.roomType?.maxAdult || 0} người lớn và{" "}
+            {room.roomType?.maxChildren || 0} trẻ em
           </div>
 
           {/* Price and CTA */}
@@ -82,7 +68,7 @@ const RoomCard = ({ room }: RoomCardProps) => {
             <div>
               <p className="text-xs text-muted-foreground">Chỉ từ</p>
               <p className="text-2xl font-light text-foreground">
-                {formatVND(room.price)}
+                {formatVND(room.roomType?.basePrice || 0)}
                 <span className="text-xs text-muted-foreground">/đêm</span>
               </p>
             </div>
