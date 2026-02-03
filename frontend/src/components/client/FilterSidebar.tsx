@@ -1,5 +1,7 @@
 import { formatVND } from "@/lib/format";
 import { Card } from "../ui/card";
+import { useEffect, useState } from "react";
+import roomTypeApi from "@/api/roomTypeApi.js";
 
 interface FilterSidebarProps {
   priceRange: [number, number];
@@ -27,6 +29,11 @@ const SORT_OPTIONS = [
   { value: "rating", label: "Đánh giá: Cao đến thấp" },
 ];
 
+interface RoomType {
+  roomTypeId: string;
+  typeName: string;
+}
+
 const FilterSidebar = ({
   priceRange,
   onPriceChange,
@@ -35,6 +42,22 @@ const FilterSidebar = ({
   sortBy,
   onSortChange,
 }: FilterSidebarProps) => {
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+
+  useEffect(() => {
+    const fetchRoomTypes = async () => {
+      try {
+        const res = await roomTypeApi.getAll();
+
+        setRoomTypes(res.data.result);
+      } catch (error) {
+        console.error("Failed to fetch room types:", error);
+      }
+    };
+
+    fetchRoomTypes();
+  }, []);
+
   return (
     <div className="space-y-6 sticky top-6">
       {/* Sort */}
@@ -112,20 +135,20 @@ const FilterSidebar = ({
       <Card className="border-border bg-card p-4 space-y-3">
         <h3 className="text-sm font-medium text-foreground">Kiểu phòng</h3>
         <div className="space-y-2">
-          {ROOM_TYPES.map((type) => (
+          {roomTypes.map((type) => (
             <label
-              key={type.value}
+              key={type.roomTypeId}
               className="flex items-center gap-3 cursor-pointer hover:bg-secondary p-2 rounded transition-colors"
             >
               <input
                 type="radio"
                 name="type"
-                value={type.value}
-                checked={selectedType === type.value}
-                onChange={() => onTypeChange(type.value)}
+                value={type.typeName}
+                checked={selectedType === type.typeName}
+                onChange={() => onTypeChange(type.typeName)}
                 className="h-4 w-4 rounded border-input text-accent focus:ring-2 focus:ring-ring"
               />
-              <span className="text-sm text-foreground">{type.label}</span>
+              <span className="text-sm text-foreground">{type.typeName}</span>
             </label>
           ))}
         </div>
