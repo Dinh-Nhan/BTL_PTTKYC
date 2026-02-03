@@ -43,6 +43,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddMemoryCache();
 
 
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
@@ -67,6 +68,8 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<OtpCacheService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
