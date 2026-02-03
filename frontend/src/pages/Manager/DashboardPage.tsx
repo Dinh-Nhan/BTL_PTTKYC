@@ -10,7 +10,7 @@ const DashBoardPage = () => {
       <div className="flex-1 p-6 space-y-6">
         <DashboardStats />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <BookingsChart />
+          <BookingsChart/>
           <RecentBookings />
         </div>
       </div>
