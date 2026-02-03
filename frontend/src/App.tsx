@@ -6,9 +6,9 @@ import { Route, Routes } from "react-router-dom";
 // import InvoicesPage from "./pages/Manager/InvoicesPage";
 // import StaffPage from "./pages/Manager/StaffPage";
 // import CustomerPage from "./pages/Manager/CustomerPage";
+
 import Login from "./pages/Login";
 const App = () => {
-
   return (
     // <Home />
 
@@ -23,7 +23,7 @@ const App = () => {
     //   </Routes>
     // </Admin>
     <Routes>
-      <Route path="/login" element={<Login/>} />
+      <Route path="/login" element={<Login />} />
     </Routes>
   );
 };
