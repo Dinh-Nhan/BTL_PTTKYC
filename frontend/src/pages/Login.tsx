@@ -32,8 +32,8 @@ const Login = () => {
                 <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 2.18l8 3.6v8.72c0 4.42-2.85 8.52-7 9.81V7.78L5 4.18l7-3.6z"/>
                 <path d="M7 10h2v7H7zm4-2h2v9h-2zm4 4h2v5h-2z"/>
               </svg>
-              <h1 className="text-4xl font-bold mb-2">Quản Lý Khách Sạn</h1>
-              <p className="text-orange-100 text-lg">Hệ thống quản lý toàn diện</p>
+              <h1 className="text-4xl font-bold mb-2">Hogwarts Restaurant Booking</h1>
+              <p className="text-orange-100 text-lg">Comprehensive hotel booking system</p>
             </div>
             
             <div className="space-y-4 mt-12">
@@ -42,8 +42,8 @@ const Login = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <div>
-                  <h3 className="font-semibold">Quản lý đặt phòng</h3>
-                  <p className="text-orange-100 text-sm">Theo dõi và xử lý đặt phòng hiệu quả</p>
+                  <h3 className="font-semibold">Reservation Management</h3>
+                  <p className="text-orange-100 text-sm">Track and process bookings efficiently.</p>
                 </div>
               </div>
               
@@ -52,8 +52,8 @@ const Login = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <div>
-                  <h3 className="font-semibold">Quản lý khách hàng</h3>
-                  <p className="text-orange-100 text-sm">Lưu trữ thông tin khách hàng chi tiết</p>
+                  <h3 className="font-semibold">Customer management</h3>
+                  <p className="text-orange-100 text-sm">Customer information is stored with absolute confidentiality.</p>
                 </div>
               </div>
               
@@ -62,8 +62,8 @@ const Login = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <div>
-                  <h3 className="font-semibold">Báo cáo thống kê</h3>
-                  <p className="text-orange-100 text-sm">Phân tích doanh thu và hiệu suất</p>
+                  <h3 className="font-semibold">Statistical report</h3>
+                  <p className="text-orange-100 text-sm">Revenue and performance analysis</p>
                 </div>
               </div>
             </div>
@@ -73,8 +73,8 @@ const Login = () => {
         {/* Right Side - Login Form */}
         <div className="p-12 flex flex-col justify-center">
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Đăng Nhập</h2>
-            <p className="text-gray-600">Chào mừng trở lại! Vui lòng đăng nhập vào tài khoản của bạn.</p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Log In</h2>
+            <p className="text-gray-600">Welcome! Please, log in by your account to system.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -102,7 +102,7 @@ const Login = () => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Mật khẩu
+                Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -144,10 +144,10 @@ const Login = () => {
                   type="checkbox"
                   className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
                 />
-                <span className="ml-2 text-sm text-gray-600">Ghi nhớ đăng nhập</span>
+                <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
               <a href="#" className="text-sm font-medium text-orange-500 hover:text-orange-600">
-                Quên mật khẩu?
+                Forgot password?
               </a>
             </div>
 
@@ -162,26 +162,17 @@ const Login = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Đang xử lý...
+                  Loading...
                 </span>
               ) : (
-                'Đăng Nhập'
+                'Log In'
               )}
             </button>
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-600">
-              Chưa có tài khoản?{' '}
-              <a href="#" className="font-medium text-orange-500 hover:text-orange-600">
-                Đăng ký ngay
-              </a>
-            </p>
-          </div>
-
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-xs text-center text-gray-500">
-              © 2024 Hệ thống Quản lý Khách sạn. Bảo mật và An toàn.
+              © 2024 Hotel Management System. Security and Safety.
             </p>
           </div>
         </div>
