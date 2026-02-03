@@ -9,6 +9,6 @@ namespace backend.Repository.interfaces
         Task<Booking?> GetById(int bookingId);
         Task<Booking?> GetByIdWithDetails(int bookingId);
         Task<bool> IsRoomAvailable(int roomId, DateTime checkInDatetime, DateTime checkOutDatetime);
-        Task Update(Booking booking);
+        void Update(Booking booking);
     }
 }

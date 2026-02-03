@@ -1,4 +1,3 @@
-
 ﻿using AutoMapper;
 using backend.Dtos.Request;
 using backend.Dtos.Response;
@@ -21,28 +20,7 @@ namespace backend.Service.implementations
             _mapper = mapper;
         }
 
-        public User CreateStaff(User staff)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool DeleteStaff(int userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<User> getAllStaff()
-        {
-            throw new NotImplementedException();
-        }
-
-        public User Update(User user)
-        {
-            throw new NotImplementedException();
-        }
-        
-
-                public ApiResponse<User> validateUser(LoginRequest request)
+        public ApiResponse<User> validateUser(LoginRequest request)
         {
             var user = _userRepository.ValidateUser(request.Email, request.Password);
 

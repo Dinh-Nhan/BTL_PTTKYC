@@ -5,11 +5,11 @@ namespace backend.Repository.interfaces
     public interface IRefreshTokenRepository
     {
         RefreshToken? GetByToken(string token);
-        RefreshToken? GetByTokenForUpdate(string token); // Thêm method mới
+        RefreshToken? GetByTokenForUpdate(string token); 
         void SaveChanges();
 
         void Create(RefreshToken refreshToken);
-        void RevokeAllByUserId(int userId); // Thêm method này
+        void RevokeAllByUserId(int userId); 
 
     }
 }

@@ -9,6 +9,7 @@ namespace backend.Repository.interfaces
         // cập nhật trạng thái phòng thành không hoạt động
         bool deactiveRoom(int roomId);
 
+        // cập nhật trạng thái phòng thành hoạt động
         bool activeRoom(int roomId);
 
         Room? getById(int roomId);
@@ -18,5 +19,10 @@ namespace backend.Repository.interfaces
         Room? GetByIdWithRoomType(int roomId);
 
         Task<IEnumerable<Room>> listRoomAvailable();
+
+        Task<IEnumerable<Room>> RoomAvailableByDate(DateTime checkInDate,
+            DateTime checkOutDate,
+            int adult,
+            int children);
     }
 }

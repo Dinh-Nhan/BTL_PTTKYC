@@ -68,6 +68,37 @@ namespace backend.Repository.implementations
                         .ToListAsync();
         }
 
+        public async Task<IEnumerable<Room>> RoomAvailableByDate(
+            DateTime checkInDate,
+            DateTime checkOutDate,
+            int adult,
+            int children
+        )
+        {
+            checkInDate = checkInDate.Date;
+            checkOutDate = checkOutDate.Date;
+
+            var rooms = await _context.Rooms
+                .Include(r => r.RoomType)
+                .Include(r => r.Bookings)
+                .Where(r =>
+                    r.IsActive == true
+                    && r.Status == "AVAILABLE"
+                    && r.RoomType.MaxAdult >= adult
+                    && r.RoomType.MaxChildren >= children
+                    && !r.Bookings.Any(b =>
+                        b.Status != "CANCELLED"
+                        && b.Status != "REFUNDED"
+                        && b.CheckInDatetime < checkOutDate
+                        && b.CheckOutDatetime > checkInDate
+                    )
+                )
+                .ToListAsync();
+
+            return rooms;
+        }
+
+
         public Room? updateRoom(Room update)
         {
             update.UpdatedAt = DateTime.Now;

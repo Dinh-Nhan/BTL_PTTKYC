@@ -5,7 +5,6 @@ namespace backend.Service.implementations
 {
     public class ApiResponseFactory : IApiResponseFactory
     {
-        // api response cho trường hợp fail
         public ApiResponse<T> Fail<T>(int statusCode = 500, string message = "Error")
         {
             return new ApiResponse<T>(
