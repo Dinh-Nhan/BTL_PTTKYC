@@ -4,6 +4,8 @@ import RecentBookings from "@/components/admin/dashboard/recent-bookings";
 import Header from "@/components/admin/layout/header";
 
 const DashBoardPage = () => {
+  
+
   return (
     <div className="flex flex-col h-full">
       <Header title="Tổng quan" />
