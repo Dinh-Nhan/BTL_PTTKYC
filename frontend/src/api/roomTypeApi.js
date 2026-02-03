@@ -1,6 +1,6 @@
 import axiosClient from "./axiosClient";
 
-export const roomTypeApi = {
+const roomTypeApi = {
   getAll: () => {
     return axiosClient.get("/api/RoomType");
   },
@@ -21,3 +21,5 @@ export const roomTypeApi = {
     return axiosClient.delete(`/api/RoomType/${roomTypeId}`);
   },
 };
+
+export default roomTypeApi;
