@@ -6,27 +6,25 @@ import { Route, Routes } from "react-router-dom";
 // import InvoicesPage from "./pages/Manager/InvoicesPage";
 // import StaffPage from "./pages/Manager/StaffPage";
 // import CustomerPage from "./pages/Manager/CustomerPage";
-import Home from "./pages/Home";
-import RoomDetail from "./pages/RoomDetail";
 
+import Login from "./pages/Login";
 const App = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/room/:id" element={<RoomDetail />} />
-    </Routes>
+    // <Home />
 
     // <Admin>
     //   <Routes>
-
-    //     <Route path="/admin" element={<DashBoardPage />} />
-    //     <Route path="/admin/rooms" element={<RoomManagerPage />} />
-    //     <Route path="/admin/bookings" element={<BookingPage />} />
-    //     <Route path="/admin/invoices" element={<InvoicesPage />} />
-    //     <Route path="/admin/staff" element={<StaffPage />} />
-    //     <Route path="/admin/customers" element={<CustomerPage />} />
+    //     <Route path="/" element={<DashBoardPage/>} />
+    //     <Route path="rooms" element={<RoomManagerPage />} />
+    //     <Route path="bookings" element={<BookingPage />} />
+    //     <Route path="invoices" element={<InvoicesPage />} />
+    //     <Route path="staff" element={<StaffPage />} />
+    //     <Route path="customers" element={<CustomerPage />} />
     //   </Routes>
     // </Admin>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+    </Routes>
   );
 };
 
