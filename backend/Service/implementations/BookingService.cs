@@ -48,7 +48,6 @@ namespace backend.Service.implementations
 
         public async Task<ApiResponse<PaymentResponse>> CreateBookingForClient(BookingRequest request, string ipAddress)
         {
-            _logger.LogInformation("IPV4 Address: {ip}", ipAddress);
             try
             {
 
@@ -56,7 +55,7 @@ namespace backend.Service.implementations
                 {
                     return _apiResponseFactory.Fail<PaymentResponse>(
                         StatusCodes.Status400BadRequest,
-                        "Thông tin khách hàng là bắt buộc"
+                        "Customer information is required"
                     );
                 }
 
@@ -69,22 +68,12 @@ namespace backend.Service.implementations
                     );
                 }
     
-
-                if (request.DepositAmount.HasValue && request.DepositAmount.Value < 0)
-                {
-                    return _apiResponseFactory.Fail<PaymentResponse>(
-                        StatusCodes.Status400BadRequest,
-                        "Số tiền đặt cọc không hợp lệ"
-                    );
-                }
-
-
                 var room =  _roomRepository.GetByIdWithRoomType(request.RoomId);
                 if (room == null)
                 {
                     return _apiResponseFactory.Fail<PaymentResponse>(
                         StatusCodes.Status404NotFound,
-                        $"Không tìm thấy phòng với ID {request.RoomId}"
+                        $"No rooms found matching ID {request.RoomId}"
                     );
                 }
 
@@ -108,22 +97,34 @@ namespace backend.Service.implementations
                 {
                     return _apiResponseFactory.Fail<PaymentResponse>(
                         StatusCodes.Status409Conflict,
-                        "Phòng đã được đặt trong khoảng thời gian này"
+                        "The room has been booked for this period."
                     );
                 }
 
+                var today = DateTime.Now.Date;
+                var checkInDate = request.CheckInDatetime.Date;
 
-                decimal roomPrice = room.RoomType?.BasePrice ?? 0;
-                decimal totalAmount = CalculateTotalAmount(roomPrice, request.NumberDay);
+                var daysDiff = (checkInDate - today).TotalDays;
 
-                if (request.DepositAmount.HasValue && request.DepositAmount.Value > totalAmount)
+                if (daysDiff < 3)
                 {
                     return _apiResponseFactory.Fail<PaymentResponse>(
                         StatusCodes.Status400BadRequest,
-                        "Số tiền đặt cọc không được lớn hơn tổng tiền phòng"
+                        "Please book your room at least 3 days in advance"
                     );
                 }
 
+
+                // tự động tính số ngày ở
+                int numberOfDays = CalculateNumberOfDays(request.CheckInDatetime, request.CheckOutDatetime);
+
+                decimal roomPrice = room.RoomType?.BasePrice ?? 0;
+
+                // tính tổng tiền
+                decimal totalAmount = CalculateTotalAmount(roomPrice, numberOfDays);
+
+                // tính tiền cọc
+                decimal depositAmount = CalculateDepositAmount(totalAmount);
 
                 await _unitOfWork.BeginTransactionAsync();
 
@@ -131,18 +132,15 @@ namespace backend.Service.implementations
                 {
                     var client = await GetOrCreateClient(request.Client);
 
-                    var booking = CreateBookingEntity(request, client.ClientId, totalAmount);
+                    var booking = CreateBookingEntity(request, client.ClientId, totalAmount, depositAmount, numberOfDays);
 
                     var createdBooking = await _bookingRepository.createBooking(booking);
 
                     if (createdBooking == null)
                     {
-                        throw new InvalidOperationException("Không thể tạo booking");
+                        throw new InvalidOperationException("Unable to create a booking.");
                     }
 
-                    //UpdateRoomStatus(room, "BOOKED");
-
-                    //_roomRepository.updateRoom(room);
 
                     // tạo url thanh toán vnpay
                     string paymentUrl = _vnpayService.CreatePaymentUrl(
@@ -168,7 +166,7 @@ namespace backend.Service.implementations
                     };
 
                     // chỉ trả về url thanh toán
-                    return _apiResponseFactory.Success(response, "Đặt phòng thành công");
+                    return _apiResponseFactory.Success(response, "Booking successful");
                 }
                 catch (Exception ex)
                 {
@@ -190,132 +188,9 @@ namespace backend.Service.implementations
 
                 return _apiResponseFactory.Fail<PaymentResponse>(
                     StatusCodes.Status500InternalServerError,
-                    $"Đã xảy ra lỗi khi tạo booking: {ex.Message}"
+                    $"An error occurred while creating the booking.: {ex.Message}"
                 );
             }
-        }
-
-
-        private (bool IsValid, string? ErrorMessage) ValidateBookingDates(BookingRequest request)
-        {
-            if (request.CheckInDatetime.Date >= request.CheckOutDatetime.Date)
-            {
-                return (false, "The check-out date must be after the check-in date");
-            }
-
-            if (request.CheckInDatetime.Date < DateTime.UtcNow.Date)
-            {
-                return (false, "The check-in date cannot be a date from the past");
-            }
-
-            var actualDays = (request.CheckOutDatetime.Date - request.CheckInDatetime.Date).Days;
-            if (request.NumberDay != actualDays)
-            {
-                return (false, $"The number of days in ({request.NumberDay}) does not match the time period ({actualDays} days)");
-            }
-
-            // Maximum booking duration
-            if (request.NumberDay > 30)
-            {
-                return (false, "The booking period must not exceed 30 days");
-            }
-
-            return (true, null);
-        }
-
-        private (bool IsValid, string? ErrorMessage) ValidateRoom(Room room, int adultCount, int? childCount)
-        {
-            if (room.IsActive == false)
-            {
-                return (false, "The room is currently unavailable.");
-            }
-
-            if (room.Status != "AVAILABLE")
-            {
-                return (false, $"The room is currently in the status: {room.Status}");
-            }
-
-            var totalGuests = adultCount + (childCount ?? 0);
-            var totalGuestAllow = (room.RoomType?.MaxAdult ?? 0) + (room.RoomType?.MaxChildren ?? 0);
-            if (room.RoomType?.MaxAdult != null && room.RoomType?.MaxChildren != null && totalGuests > totalGuestAllow)
-            {
-                return (false, $"The total number of guests ({totalGuests}) exceeds the maximum capacity ({totalGuestAllow})");
-            }
-
-            return (true, null);
-        }
-
-        private decimal CalculateTotalAmount(decimal pricePerNight, int numberOfDays)
-        {
-            return pricePerNight * numberOfDays;
-        }
-
-        private Booking CreateBookingEntity(BookingRequest request, int clientId, decimal totalAmount)
-        {
-
-            var booking = _mapper.Map<Booking>(request);
-            booking.ClientId = clientId;
-            booking.TotalPrice = totalAmount;
-            booking.Status = "PENDING";
-            booking.PaymentStatus = request.DepositAmount.HasValue && request.DepositAmount.Value > 0
-                    ? "PARTIAL"
-                    : "UNPAID";
-            booking.CreatedAt = DateTime.UtcNow;
-
-            return booking;         
-        }
-
-        private void UpdateRoomStatus(Room room, string status)
-        {
-            room.Status = status;
-            room.UpdatedAt = DateTime.UtcNow;
-        }     
-
-
-        private async Task<Client> GetOrCreateClient(ClientRequest clientRequest)
-        {
-            // Database query - cần async
-            var existingClient = await _clientRepository.GetByEmail(clientRequest.Email);
-
-            if (existingClient != null)
-            {
-                _logger.LogInformation("Using existing client: {Email}", existingClient.Email);
-
-                if (IsClientInfoChanged(existingClient, clientRequest))
-                {
-                    UpdateClientInfo(existingClient, clientRequest);
-                    await _clientRepository.Update(existingClient); 
-                    _logger.LogInformation("Updated client info: {Email}", existingClient.Email);
-                }
-
-                return existingClient;
-            }
-
-
-            var newClient = _mapper.Map<Client>(clientRequest);   
-
-            var createdClient =  _clientRepository.createClient(newClient);
-
-            if (createdClient == null)
-            {
-                throw new InvalidOperationException("Unable to generate customer information");
-            }
-
-            _logger.LogInformation("Created new client: {Email}", createdClient.Email);
-
-            return createdClient;
-        }
-
-        private bool IsClientInfoChanged(Client existing, ClientRequest request)
-        {
-            return existing.FullName != request.FullName ||
-                   existing.PhoneNumber != request.PhoneNumber;
-        }
-
-        private void UpdateClientInfo(Client existing, ClientRequest request)
-        {
-            existing.FullName = request.FullName;
-            existing.PhoneNumber = request.PhoneNumber;
         }
 
 
@@ -412,7 +287,7 @@ namespace backend.Service.implementations
                     booking.Status = "CANCELLED";
                     booking.UpdatedAt = DateTime.UtcNow;
                     booking.Note = $"ĐÃ HỦY - Lí do: {request.reasonCancel}";
-                    await _bookingRepository.Update(booking); 
+                     _bookingRepository.Update(booking); 
 
                     var room = _roomRepository.getById(booking.RoomId);
                     if (room != null)
@@ -444,25 +319,7 @@ namespace backend.Service.implementations
             }
         }
 
-        private (bool IsValid, string? ErrorMessage) ValidateCancellation(Booking booking)
-        {
-            if (booking.Status == "CANCELLED")
-            {
-                return (false, "The booking was previously cancelled.");
-            }
-
-            if (booking.Status == "CHECKED_OUT")
-            {
-                return (false, "Bookings that have been completed cannot be canceled.");
-            }
-
-            if (booking.CheckInDatetime.Date < DateTime.UtcNow.Date)
-            {
-                return (false, "Bookings cannot be canceled after the check-in date.");
-            }
-
-            return (true, null);
-        }
+        
 
         public async Task<ApiResponse<BookingResponse>> ProcessPaymentCallback(VnpayTransaction vnpayTransaction)
         {
@@ -495,7 +352,7 @@ namespace backend.Service.implementations
                         booking.PaymentStatus = "PARTIAL"; 
                         booking.Status = "CONFIRMED";
                         booking.UpdatedAt = DateTime.UtcNow;
-                        await _bookingRepository.Update(booking);
+                         _bookingRepository.Update(booking);
 
                         var room = _roomRepository.getById(booking.RoomId);
                         if (room != null)
@@ -529,7 +386,7 @@ namespace backend.Service.implementations
                         booking.PaymentStatus = "FAILED";
                         booking.Note = $"Payment failed: VNPAY payment error";
                         booking.UpdatedAt = DateTime.UtcNow;
-                        await _bookingRepository.Update(booking);
+                         _bookingRepository.Update(booking);
 
                         await _unitOfWork.CommitTransactionAsync();
 
@@ -643,6 +500,7 @@ namespace backend.Service.implementations
             }
         }
 
+        // Mock refund 
         public async Task<ApiResponse<RefundResponse>> RefundBooking(RefundRequest request, string ipAddress)
         {
             try
@@ -656,7 +514,7 @@ namespace backend.Service.implementations
                     );
                 }
 
-                // 2. Lấy booking và transaction từ DB
+                // 2. Lấy booking từ DB
                 var booking = await _bookingRepository.GetByIdWithDetails(request.BookingId);
                 if (booking == null)
                 {
@@ -666,114 +524,95 @@ namespace backend.Service.implementations
                     );
                 }
 
+                // 3. Lấy transaction (nếu có)
                 var vnpayTransaction = await _vnpayTransactionService.getByBookingId(request.BookingId);
-                if (vnpayTransaction == null)
-                {
-                    return _apiResponseFactory.Fail<RefundResponse>(
-                        StatusCodes.Status404NotFound,
-                        $"No payment transaction found for booking {request.BookingId}"
-                    );
-                }
 
-                // 3. Validate refund eligibility
-                var validation = ValidateRefundEligibility(booking, vnpayTransaction);
-                if (!validation.IsValid)
+                // 4. Validate refund eligibility (kiểm tra cơ bản)
+                var basicValidation = ValidateBasicRefundEligibility(booking);
+                if (!basicValidation.IsValid)
                 {
                     return _apiResponseFactory.Fail<RefundResponse>(
                         StatusCodes.Status400BadRequest,
-                        validation.ErrorMessage
+                        basicValidation.ErrorMessage
                     );
                 }
 
-                // 4. Query VNPay trước để đảm bảo giao dịch vẫn hợp lệ
-                //var queryResult = await _vnpayService.QueryTransaction(
-                //    vnpayTransaction,
-                //    $"Booking{booking.BookingId}",
-                //    ipAddress
-                //);
+                // 5. Tính số ngày còn lại đến check-in
+                int daysUntilCheckIn = CalculateDaysUntilCheckIn(booking.CheckInDatetime);
 
-                //if (queryResult == null || queryResult.vnp_ResponseCode != "00")
-                //{
-                //    return _apiResponseFactory.Fail<RefundResponse>(
-                //        StatusCodes.Status500InternalServerError,
-                //        $"Cannot verify transaction status: {queryResult?.vnp_Message}"
-                //    );
-                //}
+                // 6. Tính % hoàn tiền theo chính sách
+                var refundPolicy = CalculateRefundPolicy(daysUntilCheckIn);
 
-                //// Kiểm tra trạng thái giao dịch
-                //if (queryResult.vnp_TransactionStatus != "00")
-                //{
-                //    return _apiResponseFactory.Fail<RefundResponse>(
-                //        StatusCodes.Status400BadRequest,
-                //        $"Transaction is not successful. Status: {queryResult.vnp_TransactionStatus}"
-                //    );
-                //}
-
-                // 5. Gửi yêu cầu hoàn tiền tới VNPay
-                var refundResult = await _vnpayService.RefundTransaction(
-                    vnpayTransaction,
-                    $"Refund for Booking{booking.BookingId} - Reason: {request.Reason}",
-                    request.RequestedBy ?? "System",
-                    ipAddress
-                );
-
-                if (refundResult == null || refundResult.vnp_ResponseCode != "00")
+                if (!refundPolicy.IsEligible)
                 {
-                    _logger.LogWarning(
-                        "Refund failed for booking {BookingId}. VNPay response: {Response}",
-                        request.BookingId,
-                        refundResult?.vnp_Message
-                    );
-
                     return _apiResponseFactory.Fail<RefundResponse>(
                         StatusCodes.Status400BadRequest,
-                        $"Refund request failed: {refundResult?.vnp_Message}"
+                        refundPolicy.Message
                     );
                 }
 
-                // 6. Cập nhật database
+                decimal originalDepositAmount = booking.DepositAmount ?? 0;
+                decimal refundAmount = CalculateRefundAmount(originalDepositAmount, refundPolicy.RefundPercentage);
+
                 await _unitOfWork.BeginTransactionAsync();
+
                 try
                 {
                     // Cập nhật booking
-                    booking.Status = "REFUNDED";
+                    booking.Status = "CANCELLED"; 
                     booking.PaymentStatus = "REFUNDED";
-                    booking.Note = $"Hoàn tiền 100% - Lý do: {request.Reason} - By: {request.RequestedBy}";
+                    booking.Note = $"[MOCK REFUND] Hoàn {refundPolicy.RefundPercentage}% ({FormatCurrency(refundAmount)}) - " +
+                                  $"Lý do: {request.Reason} - " +
+                                  $"Số ngày trước check-in: {daysUntilCheckIn} - " +
+                                  $"By: {request.RequestedBy ?? "System"}";
                     booking.UpdatedAt = DateTime.UtcNow;
-                    await _bookingRepository.Update(booking);
+                     //_bookingRepository.Update(booking);
 
                     // Cập nhật room về AVAILABLE
                     var room = _roomRepository.getById(booking.RoomId);
-                    if (room != null && room.Status == "BOOKED")
+                    if (room != null && (room.Status == "BOOKED" || room.Status == "RESERVED"))
                     {
                         UpdateRoomStatus(room, "AVAILABLE");
                         _roomRepository.updateRoom(room);
                     }
 
-                    // Lưu thông tin hoàn tiền vào transaction
-                    vnpayTransaction.VnpTransactionStatus = refundResult.vnp_TransactionStatus;
-                    vnpayTransaction.PaymentStatus = "REFUNDED";
-                    //await _vnpayTransactionService.UpdateTransaction(vnpayTransaction);
+                    // Cập nhật transaction nếu có
+                    if (vnpayTransaction != null)
+                    {
+                        vnpayTransaction.PaymentStatus = "REFUNDED";
+                        vnpayTransaction.VnpTransactionStatus = "02";
+                    }
 
                     await _unitOfWork.CommitTransactionAsync();
 
                     _logger.LogInformation(
-                        "Refund successful for booking {BookingId}. Amount: {Amount}. VNPay Transaction: {TxnNo}",
+                        "[MOCK REFUND] Booking {BookingId} refunded successfully. " +
+                        "Days before check-in: {Days}, Refund %: {Percentage}%, Amount: {Amount}",
                         request.BookingId,
-                        vnpayTransaction.VnpAmount,
-                        refundResult.vnp_TransactionNo
+                        daysUntilCheckIn,
+                        refundPolicy.RefundPercentage,
+                        refundAmount
                     );
 
                     var response = new RefundResponse
                     {
                         BookingId = request.BookingId,
-                        RefundAmount = vnpayTransaction.VnpAmount,
+                        OriginalDepositAmount = originalDepositAmount,
+                        RefundAmount = refundAmount,
+                        RefundPercentage = refundPolicy.RefundPercentage,
                         RefundStatus = "SUCCESS",
-                        Message = "Refund processed successfully. Money will be returned within 3-5 business days.",
-                        VnpTransactionNo = refundResult.vnp_TransactionNo
+                        Message = $"[MOCK] Hoàn tiền thành công {refundPolicy.RefundPercentage}% " +
+                                 $"({FormatCurrency(refundAmount)}). " +
+                                 $"Số tiền sẽ được hoàn vào tài khoản trong vòng 3-5 ngày làm việc.",
+                        RefundDate = DateTime.UtcNow,
+                        DaysBeforeCheckIn = daysUntilCheckIn,
+                        VnpTransactionNo = vnpayTransaction?.VnpTransactionNo ?? $"MOCK-{Guid.NewGuid().ToString().Substring(0, 8)}"
                     };
 
-                    return _apiResponseFactory.Success(response, "Refund processed successfully");
+                    return _apiResponseFactory.Success(
+                        response,
+                        $"Hoàn tiền thành công {refundPolicy.RefundPercentage}%"
+                    );
                 }
                 catch (Exception ex)
                 {
@@ -781,7 +620,7 @@ namespace backend.Service.implementations
 
                     _logger.LogError(
                         ex,
-                        "Error updating database after successful refund for booking {BookingId}",
+                        "Error updating database after mock refund for booking {BookingId}",
                         request.BookingId
                     );
 
@@ -790,7 +629,7 @@ namespace backend.Service.implementations
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing refund for booking {BookingId}", request?.BookingId);
+                _logger.LogError(ex, "Error processing mock refund for booking {BookingId}", request?.BookingId);
 
                 return _apiResponseFactory.Fail<RefundResponse>(
                     StatusCodes.Status500InternalServerError,
@@ -847,6 +686,270 @@ namespace backend.Service.implementations
 
             return (true, null);
         }
+        private int CalculateNumberOfDays(DateTime checkInDate, DateTime checkOutDate)
+        {
+            TimeSpan duration = checkOutDate.Date - checkInDate.Date;
+            int numberOfDays = (int)duration.TotalDays;
+
+            return numberOfDays > 0 ? numberOfDays : 1;
+        }
+
+        private (bool IsValid, string? ErrorMessage) ValidateCancellation(Booking booking)
+        {
+            if (booking.Status == "CANCELLED")
+            {
+                return (false, "The booking was previously cancelled.");
+            }
+
+            if (booking.Status == "CHECKED_OUT")
+            {
+                return (false, "Bookings that have been completed cannot be canceled.");
+            }
+
+            if (booking.CheckInDatetime.Date < DateTime.UtcNow.Date)
+            {
+                return (false, "Bookings cannot be canceled after the check-in date.");
+            }
+
+            return (true, null);
+        }
+
+        private bool IsClientInfoChanged(Client existing, ClientRequest request)
+        {
+            return existing.FullName != request.FullName ||
+                   existing.PhoneNumber != request.PhoneNumber;
+        }
+
+        private void UpdateClientInfo(Client existing, ClientRequest request)
+        {
+            existing.FullName = request.FullName;
+            existing.PhoneNumber = request.PhoneNumber;
+        }
+
+        private (bool IsValid, string? ErrorMessage) ValidateBookingDates(BookingRequest request)
+        {
+            if (request.CheckInDatetime.Date >= request.CheckOutDatetime.Date)
+            {
+                return (false, "The check-out date must be after the check-in date");
+            }
+
+            if (request.CheckInDatetime.Date < DateTime.UtcNow.Date)
+            {
+                return (false, "The check-in date cannot be a date from the past");
+            }
+
+            
+            int numberOfDays = CalculateNumberOfDays(request.CheckInDatetime, request.CheckOutDatetime);
+            
+            if (numberOfDays <= 0)
+            {
+                return (false, "Invalid booking duration");
+            }
+
+            if (numberOfDays > 30)
+            {
+                return (false, "The booking period must not exceed 30 days");
+            }
+
+            return (true, null);
+        }
+
+        private (bool IsValid, string? ErrorMessage) ValidateRoom(Room room, int adultCount, int? childCount)
+        {
+            if (room.IsActive == false)
+            {
+                return (false, "The room is currently unavailable.");
+            }
+
+            if (room.Status != "AVAILABLE")
+            {
+                return (false, $"The room is currently in the status: {room.Status}");
+            }
+
+            var totalGuests = adultCount + (childCount ?? 0);
+            var totalGuestAllow = (room.RoomType?.MaxAdult ?? 0) + (room.RoomType?.MaxChildren ?? 0);
+            if (room.RoomType?.MaxAdult != null && room.RoomType?.MaxChildren != null && totalGuests > totalGuestAllow)
+            {
+                return (false, $"The total number of guests ({totalGuests}) exceeds the maximum capacity ({totalGuestAllow})");
+            }
+
+            return (true, null);
+        }
+
+        private decimal CalculateTotalAmount(decimal pricePerNight, int numberOfDays)
+        {
+            return pricePerNight * numberOfDays;
+        }
+
+        // booking đang xử lý và chưa được thanh toán
+        private Booking CreateBookingEntity(BookingRequest request, int clientId, decimal totalPrice, decimal depositAmount, int numberOfDays)
+        {
+
+            var booking = _mapper.Map<Booking>(request);
+            booking.ClientId = clientId;
+            booking.TotalPrice = totalPrice;
+            booking.DepositAmount = depositAmount;
+            booking.NumberDay = numberOfDays;
+            booking.Status = "PENDING";
+            booking.CreatedAt = DateTime.UtcNow;
+            booking.PaymentStatus = "UNPAID";
+            return booking;
+            
+        }
+
+        private void UpdateRoomStatus(Room room, string status)
+        {
+            room.Status = status;
+            room.UpdatedAt = DateTime.UtcNow;
+        }
+
+
+        private async Task<Client> GetOrCreateClient(ClientRequest clientRequest)
+        {
+            // Database query - cần async
+            var existingClient = await _clientRepository.GetByEmail(clientRequest.Email);
+
+            if (existingClient != null)
+            {
+                _logger.LogInformation("Using existing client: {Email}", existingClient.Email);
+
+                if (IsClientInfoChanged(existingClient, clientRequest))
+                {
+                    UpdateClientInfo(existingClient, clientRequest);
+                    await _clientRepository.Update(existingClient);
+                    _logger.LogInformation("Updated client info: {Email}", existingClient.Email);
+                }
+
+                return existingClient;
+            }
+
+
+            var newClient = _mapper.Map<Client>(clientRequest);
+
+            var createdClient = _clientRepository.createClient(newClient);
+
+            if (createdClient == null)
+            {
+                throw new InvalidOperationException("Unable to generate customer information");
+            }
+
+            _logger.LogInformation("Created new client: {Email}", createdClient.Email);
+
+            return createdClient;
+        }
+
+        private decimal CalculateDepositAmount(decimal totalAmount)
+        {
+            const decimal DEPOSIT_PERCENTAGE = 0.10m; // 10%
+            decimal depositAmount = totalAmount * DEPOSIT_PERCENTAGE;
+
+            // Làm tròn đến hàng nghìn (VNĐ)
+            depositAmount = Math.Round(depositAmount / 1000) * 1000;
+
+            return depositAmount;
+        }
+
+        // helper cho refund
+        // kiểm tra điều kiện hoàn tiền cơ bản
+        private (bool IsValid, string ErrorMessage) ValidateBasicRefundEligibility(Booking booking)
+        {
+            // 1. Kiểm tra trạng thái booking
+            if (booking.Status == "REFUNDED")
+            {
+                return (false, "This booking has already been refunded.");
+            }
+
+            if (booking.Status == "CANCELLED")
+            {
+                return (false, "This booking has been cancelled.");
+            }
+
+            if (booking.Status == "CHECKED_OUT")
+            {
+                return (false, "No refunds are available for completed bookings.");
+            }
+
+            if (booking.Status == "CHECKED_IN")
+            {
+                return (false, "No refunds are available for bookings that have already been checked in.");
+            }
+
+            if (booking.PaymentStatus != "PARTIAL" && booking.PaymentStatus != "PAID")
+            {
+                return (false, $"No refunds are available for unpaid bookings. Status: {booking.PaymentStatus}");
+            }
+
+            if (!booking.DepositAmount.HasValue || booking.DepositAmount.Value <= 0)
+            {
+                return (false, "No deposit required for refund");
+            }
+
+            if (booking.CheckInDatetime.Date < DateTime.UtcNow.Date)
+            {
+                return (false, "No refunds are available after the check-in date.");
+            }
+
+            return (true, null);
+        }
+
+        // tính số ngày còn lại đến ngày check-in
+        private int CalculateDaysUntilCheckIn(DateTime checkInDate)
+        {
+            DateTime today = DateTime.UtcNow.Date;
+            DateTime checkIn = checkInDate.Date;
+
+            TimeSpan difference = checkIn - today;
+            return (int)difference.TotalDays;
+        }
+
+        private (bool IsEligible, int RefundPercentage, string Message) CalculateRefundPolicy(int daysUntilCheckIn)
+        {
+            if (daysUntilCheckIn >= 3)
+            {
+                //Từ 3 ngày trở lên: Hoàn 100%
+                return (true, 100, "100% refund of deposit (from 3 days before check-in)");
+            }
+            else if (daysUntilCheckIn == 2)
+            {
+                // 2 ngày: Hoàn 50%
+                return (true, 50, "50% of the deposit will be refunded (2 days before check-in)");
+            }
+            else if (daysUntilCheckIn == 1)
+            {
+                //1 ngày: Không hoàn tiền
+                return (false, 0, "No refunds are possible (only 1 day left before check-in). According to policy, refund requests must be made at least 2 days in advance.");
+            }
+            else
+            {
+                //Đã qua hoặc đúng ngày check-in
+                return (false, 0, "No refunds will be given (if you have arrived or passed the check-in date).");
+            }
+        }
+
+        private decimal CalculateRefundAmount(decimal depositAmount, int refundPercentage)
+        {
+            if (refundPercentage <= 0 || refundPercentage > 100)
+            {
+                return 0;
+            }
+
+            decimal refundAmount = depositAmount * refundPercentage / 100;
+
+            refundAmount = Math.Round(refundAmount / 1000) * 1000;
+
+            return refundAmount;
+        }
+
+        //format tiền VNĐ
+        private string FormatCurrency(decimal amount)
+        {
+            return $"{amount:N0} VNĐ";
+        }
         #endregion
     }
 }
+
+// chính sách hoàn tiền: 
+//3 ngày trở lên: Hoàn 100%
+//2 ngày: Hoàn 50%
+//1 ngày hoặc ít hơn: Không hoàn tiền

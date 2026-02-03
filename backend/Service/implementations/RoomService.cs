@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using Azure;
+using Azure.Core;
+using backend.Dtos.Request;
 using backend.Dtos.Response;
 using backend.Mappings;
 using backend.Models;
@@ -135,5 +137,50 @@ namespace backend.Service.implementations
                 );
             }
         }
+
+        public async Task<ApiResponse<List<RoomResponse>>> roomAvailableByDate(AvailableRoomRequest request)
+        {
+            _logger.LogInformation("Date:  {checkIn}, {checkOut}",request.checkInDate, request.checkOutDate);
+            if (request.checkOutDate <= request.checkInDate)
+            {
+                return _apiResponseFactory.Fail<List<RoomResponse>>(
+                    StatusCodes.Status400BadRequest,
+                    "The check-out date must be after the check-in date."
+                );
+            }
+
+            var today = DateTime.Now.Date;
+            var daysDiff = (request.checkInDate.Date - today).TotalDays;
+
+            if (daysDiff < 1)
+            {
+                return _apiResponseFactory.Fail<List<RoomResponse>>(
+                    StatusCodes.Status400BadRequest,
+                    "Ngày check-in phải sau ngày hiện tại"
+                );
+            }
+
+            var rooms = await _roomRepository.RoomAvailableByDate(
+                request.checkInDate,
+                request.checkOutDate,
+                request.adult,
+                request.children
+            );
+
+            if (!rooms.Any())
+            {
+                return _apiResponseFactory.Success(
+                    new List<RoomResponse>(),
+                    $"Không còn phòng phù hợp từ {request.checkInDate:dd/MM/yyyy} " +
+                    $"đến {request.checkOutDate:dd/MM/yyyy} " +
+                    $"(Người lớn: {request.adult}, Trẻ em: {request.children})"
+                );
+            }
+
+            var result = _mapper.Map<List<RoomResponse>>(rooms);
+
+            return _apiResponseFactory.Success(result);
+        }
+
     }
 }

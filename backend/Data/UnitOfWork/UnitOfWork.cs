@@ -26,25 +26,13 @@ namespace backend.Data.UnitOfWork
         public async Task CommitTransactionAsync()
         {
             if (_transaction == null)
-            {
                 throw new InvalidOperationException("No transaction has been started.");
-            }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                await _transaction.CommitAsync();
-            }
-            catch
-            {
-                await RollbackTransactionAsync();
-                throw;
-            }
-            finally
-            {
-                await _transaction.DisposeAsync();
-                _transaction = null;
-            }
+            await _context.SaveChangesAsync();
+            await _transaction.CommitAsync();
+
+            await _transaction.DisposeAsync();
+            _transaction = null;
         }
 
         public async Task RollbackTransactionAsync()

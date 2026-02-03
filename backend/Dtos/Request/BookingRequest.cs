@@ -20,16 +20,10 @@ namespace backend.Dtos.Request
         public DateTime CheckOutDatetime { get; set; }
 
         [Required]
-        [Range(0, int.MaxValue, ErrorMessage = "The number of adults must be greater than or equal to 0.")]
-        public int NumberDay { get; set; }
-
-        [Required]
         [Range(1, int.MaxValue, ErrorMessage = "The number of adults must be greater than 0")]
         public int AdultCount { get; set; }
 
         public int? ChildCount { get; set; }
-
-        public decimal? DepositAmount { get; set; }
 
         public string? Note { get; set; }
     }

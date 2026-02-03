@@ -7,8 +7,7 @@ namespace backend.Dtos.Request
         [Required]
         public int BookingId { get; set; } 
         public string Reason { get; set; } = string.Empty;
-        [Required]
-        [EmailAddress]
+
         public string RequestedBy { get; set; } = string.Empty; // Email hoặc tên người yêu cầu
     }
 }

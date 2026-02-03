@@ -57,11 +57,7 @@ namespace backend.Controllers
             return StatusCode(response.statusCode, response);
         }
 
-        /// <summary>
-        /// Truy vấn trạng thái giao dịch thanh toán từ VNPay
-        /// </summary>
-        /// <param name="bookingId">ID của booking cần truy vấn</param>
-        /// <returns>Thông tin chi tiết giao dịch từ VNPay</returns>
+
         [HttpGet("query-transaction/{bookingId}")]
         [AllowAnonymous]
         public async Task<IActionResult> QueryTransactionStatus(int bookingId)
@@ -91,16 +87,7 @@ namespace backend.Controllers
             }
         }
 
-        // ============================================
-        // REFUND BOOKING
-        // ============================================
 
-        /// <summary>
-        /// Yêu cầu hoàn tiền 100% cho booking
-        /// Điều kiện: Phải trước 3 ngày check-in
-        /// </summary>
-        /// <param name="request">Thông tin yêu cầu hoàn tiền</param>
-        /// <returns>Kết quả xử lý hoàn tiền</returns>
         [HttpPost("refund")]
         [AllowAnonymous] // Có thể thay bằng [Authorize] nếu cần xác thực
         public async Task<IActionResult> RefundBooking([FromBody] RefundRequest request)

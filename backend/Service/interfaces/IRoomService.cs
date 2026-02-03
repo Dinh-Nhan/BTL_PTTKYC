@@ -1,4 +1,5 @@
-﻿using backend.Dtos.Response;
+﻿using backend.Dtos.Request;
+using backend.Dtos.Response;
 using backend.Models;
 
 namespace backend.Service.interfaces
@@ -12,5 +13,7 @@ namespace backend.Service.interfaces
         ApiResponse<Room> getById(int roomId);
 
         Task<ApiResponse<List<RoomResponse>>> listRoomAvailable();
+
+        Task<ApiResponse<List<RoomResponse>>> roomAvailableByDate(AvailableRoomRequest request);
     }
 }

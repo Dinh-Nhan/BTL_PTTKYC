@@ -19,5 +19,10 @@ namespace backend.Repository.interfaces
         Room? GetByIdWithRoomType(int roomId);
 
         Task<IEnumerable<Room>> listRoomAvailable();
+
+        Task<IEnumerable<Room>> RoomAvailableByDate(DateTime checkInDate,
+            DateTime checkOutDate,
+            int adult,
+            int children);
     }
 }

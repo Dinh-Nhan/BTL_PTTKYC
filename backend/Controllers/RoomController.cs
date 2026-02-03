@@ -50,5 +50,13 @@ namespace backend.Controllers
             var response = await _roomService.listRoomAvailable();
             return StatusCode(response.statusCode, response);
         }
+
+        [HttpGet("search-by-date")]
+        public async Task<IActionResult> roomAvailableByDate([FromQuery] AvailableRoomRequest request)
+        {
+            
+            var response = await _roomService.roomAvailableByDate(request);
+            return StatusCode(response.statusCode, response);
+        }
     }
 }
