@@ -13,7 +13,7 @@ const App = () => {
   return (
     <Admin>
       <Routes>
-        <Route path="/" element={<DashBoardPage/>} />
+        <Route path="/" element={<DashBoardPage />} />
         <Route path="rooms" element={<RoomManagerPage />} />
         <Route path="bookings" element={<BookingPage />} />
         <Route path="invoices" element={<InvoicesPage />} />
