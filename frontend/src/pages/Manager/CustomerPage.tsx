@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/auth-context";
 import { customers as initialCustomers, type Customer } from "@/lib/mock-data";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import clientApi from "@/api/clientApi"
 
 const CustomerPage = () => {
   const { isAdmin } = useAuth();
@@ -17,6 +18,19 @@ const CustomerPage = () => {
   const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(
     null,
   );
+
+  useEffect(() => {
+    const fetchClient = async () => {
+      try {
+        const res = await clientApi.getAll()
+
+
+      } catch (error) {
+        console.error("Không lấy được danh sách khách hàng: ", error);
+        toast.error("Không lấy được danh sách khách hàng");
+      }
+    }
+  })
 
   const handleSearch = (query: string) => {
     if (!query) {

@@ -12,7 +12,7 @@ import userApi from "@/api/userApi";
 import { Navigate } from "react-router-dom";
 
 interface Staff {
-  id: number;
+  id: string;
   name: string;
   email: string;
   password: string;
@@ -37,7 +37,7 @@ const mapStaffToApi = (staff: Staff) => ({
 });
 
 const mapApiToStaff = (apiStaff: any): Staff => ({
-  id: apiStaff.id,
+  id: String(apiStaff.userId),
   name: apiStaff.fullName,
   email: apiStaff.email,
   password: "",
@@ -125,12 +125,14 @@ const StaffPage = () => {
         // Add new
         const payload = mapStaffToApi(staff);
 
+        console.log(payload);
+
         const res = await userApi.addUser(payload);
 
         const apiStaff = res.data;
 
         const newStaff: Staff = {
-          id: apiStaff.id,
+          id: String(apiStaff.userId),
           name: apiStaff.fullName,
           email: apiStaff.email,
           password: "",
@@ -154,14 +156,25 @@ const StaffPage = () => {
     }
   };
 
-  const handleDeleteStaff = () => {
+  const handleDeleteStaff = async () => {
     if (!deletingStaff) return;
 
-    const updated = staffList.filter((s) => s.id !== deletingStaff.id);
-    setStaffList(updated);
-    setFilteredStaff(updated);
-    setDeletingStaff(null);
-    toast.success("Staff deleted successfully");
+    try {
+      await userApi.deleteUser(deletingStaff.id);
+
+      const updated = staffList.filter(
+        (s) => s.id !== deletingStaff.id
+      );
+
+      setStaffList(updated);
+      setFilteredStaff(updated);
+      setDeletingStaff(null);
+
+      toast.success("Xóa nhân viên thành công");
+    } catch (error) {
+      console.error("Delete staff error:", error);
+      toast.error("Xóa nhân viên thất bại");
+    }
   };
 
   const handleEdit = (staff: Staff) => {
@@ -171,13 +184,13 @@ const StaffPage = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="Staff Management" />
+      <Header title="Quản lý nhân viên" />
       <div className="flex-1 p-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-3 justify-between">
           <div className="relative max-w-sm flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search staff..."
+              placeholder="Tìm kiếm nhân viên..."
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-9"
             />

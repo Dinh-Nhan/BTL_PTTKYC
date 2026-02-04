@@ -46,7 +46,7 @@ export interface Invoice {
 }
 
 export interface Staff {
-  id: number;
+  id: string;
   name: string;
   email: string;
   password: string;
@@ -305,62 +305,7 @@ export const invoices: Invoice[] = [
 ];
 
 // Mock customers data
-export const customers: Customer[] = [
-  {
-    id: "C001",
-    name: "Alice Johnson",
-    email: "alice@email.com",
-    phone: "+1 555-1001",
-    idNumber: "ID12345678",
-    totalBookings: 3,
-    createdAt: "2024-06-15",
-  },
-  {
-    id: "C002",
-    name: "Bob Smith",
-    email: "bob@email.com",
-    phone: "+1 555-1002",
-    idNumber: "ID23456789",
-    totalBookings: 5,
-    createdAt: "2023-11-20",
-  },
-  {
-    id: "C003",
-    name: "Carol White",
-    email: "carol@email.com",
-    phone: "+1 555-1003",
-    idNumber: "ID34567890",
-    totalBookings: 1,
-    createdAt: "2025-12-01",
-  },
-  {
-    id: "C004",
-    name: "David Brown",
-    email: "david@email.com",
-    phone: "+1 555-1004",
-    idNumber: "ID45678901",
-    totalBookings: 2,
-    createdAt: "2025-08-10",
-  },
-  {
-    id: "C005",
-    name: "Eva Green",
-    email: "eva@email.com",
-    phone: "+1 555-1005",
-    idNumber: "ID56789012",
-    totalBookings: 1,
-    createdAt: "2026-01-05",
-  },
-  {
-    id: "C006",
-    name: "Frank Lee",
-    email: "frank@email.com",
-    phone: "+1 555-1006",
-    idNumber: "ID67890123",
-    totalBookings: 4,
-    createdAt: "2024-04-22",
-  },
-];
+export const customers: Customer[] = [];
 
 // Dashboard stats
 export const dashboardStats = {
