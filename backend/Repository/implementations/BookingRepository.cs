@@ -64,5 +64,18 @@ namespace backend.Repository.implementations
         {
             _context.Bookings.Update(booking);
         }
+
+        public async Task<bool> UpdateDeposit(int bookingId, decimal deposti)
+        {
+            var booking = await _context.Bookings.FindAsync(bookingId);
+            if (booking == null)
+            {
+                return false;
+            }
+            booking.DepositAmount = deposti;
+            _context.Bookings.Update(booking);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }
