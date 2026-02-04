@@ -14,7 +14,8 @@ import {
   Wind,
   Wine,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import roomTypeApi from "@/api/roomTypeApi";
 
 interface RoomKanbanProps {
   rooms: Room[];
@@ -22,48 +23,76 @@ interface RoomKanbanProps {
   onStatusChange: (roomId: string, newStatus: Room["status"]) => void;
 }
 
-const statusConfig = {
-  available: {
-    label: "Có sẵn",
-    color: "bg-success/10 border-success/30",
-    headerColor: "bg-success text-success-foreground",
-    badgeVariant: "default" as const,
-  },
-  booked: {
-    label: "Đã đặt",
-    color: "bg-primary/10 border-primary/30",
-    headerColor: "bg-primary text-primary-foreground",
-    badgeVariant: "secondary" as const,
-  },
-  maintenance: {
-    label: "Bảo trì",
-    color: "bg-warning/10 border-warning/30",
-    headerColor: "bg-warning text-warning-foreground",
-    badgeVariant: "outline" as const,
-  },
-};
-
-const typeLabels: Record<Room["type"], string> = {
-  single: "Phòng đơn",
-  double: "Phòng đôi",
-  suite: "Suite",
-  deluxe: "Deluxe",
-};
-
-const amenityIcons: Record<string, React.ReactNode> = {
-  WiFi: <Wifi className="h-3 w-3" />,
-  TV: <Tv className="h-3 w-3" />,
-  AC: <Wind className="h-3 w-3" />,
-  "Mini Bar": <Wine className="h-3 w-3" />,
-  Jacuzzi: <Bath className="h-3 w-3" />,
-  Balcony: <Building2 className="h-3 w-3" />,
-};
+interface RoomType {
+  roomTypeId: number;
+  typeName: string;
+}
 
 const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
   const [draggedRoom, setDraggedRoom] = useState<Room | null>(null);
   const [dragOverStatus, setDragOverStatus] = useState<Room["status"] | null>(
-    null,
+    null
   );
+
+  const [typeRooms, setTypeRooms] = useState<RoomType[]>([]);
+
+  useEffect(() => {
+    const getRoomType = async () => {
+      try {
+        const res = await roomTypeApi.getAll();
+        // Cấu trúc API của bạn: res.data.result
+        setTypeRooms(res.data.result);
+      } catch (error) {
+        console.error("Error fetching room types:", error);
+      }
+    };
+    getRoomType(); 
+  }, []);
+
+  
+  const statusConfig = {
+    available: {
+      label: "Có sẵn",
+      color: "bg-success/10 border-success/30",
+      headerColor: "bg-success text-success-foreground",
+      badgeVariant: "default" as const,
+    },
+    booked: {
+      label: "Đã đặt",
+      color: "bg-primary/10 border-primary/30",
+      headerColor: "bg-primary text-primary-foreground",
+      badgeVariant: "secondary" as const,
+    },
+    maintenance: {
+      label: "Bảo trì",
+      color: "bg-warning/10 border-warning/30",
+      headerColor: "bg-warning text-warning-foreground",
+      badgeVariant: "outline" as const,
+    },
+  };
+
+  const typeLabels = typeRooms.reduce((acc, curr) => {
+    acc[curr.roomTypeId] = curr.typeName;
+    return acc;
+  }, {} as Record<number | string, string>);
+
+  // const typeLabels: Record<Room["type"], string> = {
+  //   single: "Phòng đơn",
+  //   double: "Phòng đôi",
+  //   suite: "Suite",
+  //   deluxe: "Deluxe",
+  // };
+
+  const amenityIcons: Record<string, JSX.Element> = {
+    WiFi: <Wifi className="h-3 w-3" />,
+    TV: <Tv className="h-3 w-3" />,
+    AC: <Wind className="h-3 w-3" />,
+    "Mini Bar": <Wine className="h-3 w-3" />,
+    Jacuzzi: <Bath className="h-3 w-3" />,
+    Balcony: <Building2 className="h-3 w-3" />,
+  };
+
+
 
   const columns: Room["status"][] = ["available", "booked", "maintenance"];
 
@@ -111,7 +140,7 @@ const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
             className={cn(
               "flex flex-col rounded-xl border-2 transition-all duration-200",
               config.color,
-              dragOverStatus === status && "ring-2 ring-primary ring-offset-2",
+              dragOverStatus === status && "ring-2 ring-primary ring-offset-2"
             )}
             onDragOver={(e) => handleDragOver(e, status)}
             onDragLeave={handleDragLeave}
@@ -143,7 +172,7 @@ const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
                     onDragEnd={handleDragEnd}
                     className={cn(
                       "cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md",
-                      draggedRoom?.id === room.id && "opacity-50 scale-95",
+                      draggedRoom?.id === room.id && "opacity-50 scale-95"
                     )}
                   >
                     <CardHeader className="p-3 pb-2">
@@ -168,18 +197,20 @@ const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
                         </Button>
                       </div>
                     </CardHeader>
+
                     <CardContent className="p-3 pt-0 space-y-3">
                       <div className="flex items-center justify-between">
                         <Badge variant="outline" className="text-xs">
-                          {typeLabels[room.type]}
+                          {/* 4. Hiển thị tên loại phòng dựa trên ID */}
+                          {typeLabels[room.type] || "Chưa xác định"}
                         </Badge>
                         <span className="text-sm font-semibold text-primary">
                           {formatVND(room.price)}/đêm
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <span>Tầng {room.floor}</span>
+                      <div className="text-xs text-muted-foreground">
+                        Tầng {room.floor}
                       </div>
 
                       <div className="flex flex-wrap gap-1.5">
@@ -189,7 +220,7 @@ const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
                             className="flex items-center gap-1 px-2 py-1 bg-muted rounded-md text-xs"
                             title={amenity}
                           >
-                            {amenityIcons[amenity] || null}
+                            {amenityIcons[amenity]}
                             <span className="hidden sm:inline">{amenity}</span>
                           </div>
                         ))}
