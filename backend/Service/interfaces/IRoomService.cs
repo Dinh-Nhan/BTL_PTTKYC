@@ -15,5 +15,6 @@ namespace backend.Service.interfaces
         Task<ApiResponse<List<RoomResponse>>> listRoomAvailable();
 
         Task<ApiResponse<List<RoomResponse>>> roomAvailableByDate(AvailableRoomRequest request);
+        Task<ApiResponse<bool>> ChangeStatusRoom(int roomId, string status);
     }
 }

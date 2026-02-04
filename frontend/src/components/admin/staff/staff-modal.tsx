@@ -26,12 +26,15 @@ interface StaffModalProps {
 }
 
 const defaultStaff: Staff = {
-  id: "",
+  id: 0,
   name: "",
   email: "",
+  password: "",
   phone: "",
-  role: "receptionist",
-  status: "active",
+  birth: "2005-08-31",
+  role: "1",
+  gender: "1",
+  status: "1",
   joinedAt: new Date().toISOString().split("T")[0],
 };
 
@@ -46,6 +49,7 @@ const StaffModal = ({ staff, open, onOpenChange, onSave }: StaffModalProps) => {
       setFormData(defaultStaff);
     }
   }, [staff, open]);
+
   const handleSave = async () => {
     setLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -59,19 +63,19 @@ const StaffModal = ({ staff, open, onOpenChange, onSave }: StaffModalProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{staff ? "Edit Staff" : "Add New Staff"}</DialogTitle>
+          <DialogTitle>{staff ? "Chỉnh sửa" : "Thêm nhân viên"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">Họ tên đầy đủ</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              placeholder="Enter full name"
+              placeholder="Nhập đầy đủ họ tên"
             />
           </div>
 
@@ -84,45 +88,93 @@ const StaffModal = ({ staff, open, onOpenChange, onSave }: StaffModalProps) => {
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
-              placeholder="Enter email address"
+              placeholder="Nhập địa chỉ email"
             />
           </div>
 
+          {!staff && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Mật khẩu</Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                placeholder="Nhập mật khẩu"
+              />
+            </div>
+          )}
+
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone">Số điện thoại</Label>
             <Input
               id="phone"
               value={formData.phone}
               onChange={(e) =>
                 setFormData({ ...formData, phone: e.target.value })
               }
-              placeholder="Enter phone number"
+              placeholder="Nhập số điện thoại"
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="birth">Ngày sinh</Label>
+            <Input
+              id="birth"
+              type="date"
+              value={formData.birth}
+              onChange={(e) =>
+                setFormData({ ...formData, birth: e.target.value })
+              }
+            />
+          </div>
+
+
           <div className="grid grid-cols-2 gap-4">
+
+            {!staff && (
+              <div className="space-y-2">
+                <Label>Quyền</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, role: value as Staff["role"] })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Admin</SelectItem>
+                    <SelectItem value="1">Nhân viên</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )
+            }
+
             <div className="space-y-2">
-              <Label>Role</Label>
+              <Label>Giới tính</Label>
               <Select
-                value={formData.role}
+                value={formData.gender}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, role: value as Staff["role"] })
+                  setFormData({ ...formData, gender: value as Staff["gender"] })
                 }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="receptionist">Receptionist</SelectItem>
-                  <SelectItem value="accountant">Accountant</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="housekeeping">Housekeeping</SelectItem>
+                  <SelectItem value="0">Nữ</SelectItem>
+                  <SelectItem value="1">Nam</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>Trạng thái</Label>
               <Select
                 value={formData.status}
                 onValueChange={(value) =>
@@ -133,8 +185,8 @@ const StaffModal = ({ staff, open, onOpenChange, onSave }: StaffModalProps) => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="1">Active</SelectItem>
+                  <SelectItem value="0">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -143,10 +195,10 @@ const StaffModal = ({ staff, open, onOpenChange, onSave }: StaffModalProps) => {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Hủy
           </Button>
           <Button onClick={handleSave} disabled={loading || !isValid}>
-            {loading ? "Saving..." : staff ? "Update" : "Add Staff"}
+            {loading ? "Saving..." : staff ? "Cập nhật" : "Thêm"}
           </Button>
         </DialogFooter>
       </DialogContent>

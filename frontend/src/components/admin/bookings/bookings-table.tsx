@@ -9,9 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import { formatVND } from "@/lib/format";
-import { type Booking } from "@/lib/mock-data";
 import { Eye, XCircle } from "lucide-react";
+
+// import  Booking  from "@/types/booking";
+
+/* ================= TYPE ================= */
 
 interface BookingsTableProps {
   bookings: Booking[];
@@ -19,17 +23,45 @@ interface BookingsTableProps {
   onCancel: (booking: Booking) => void;
 }
 
-const statusStyles = {
+interface Booking {
+  bookingId: number;
+  checkInDatetime: string;
+  checkOutDatetime: string;
+  depositAmount: number;
+  status: string;
+
+  roomResponse: {
+    roomNumber: string;
+  };
+
+  clientResponse?: {
+    fullName: string;
+  };
+}
+
+/* ================= STYLE ================= */
+
+const statusStyles: Record<string, string> = {
   pending: "bg-warning/10 text-warning border-warning/20",
   confirmed: "bg-success/10 text-success border-success/20",
   cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+  checked_in: "bg-primary/10 text-primary border-primary/20",
+  checked_out: "bg-muted text-muted-foreground border-muted",
 };
 
-const BookingsTable = ({ bookings, onView, onCancel }: BookingsTableProps) => {
+/* ================= COMPONENT ================= */
+
+const BookingsTable = ({
+  bookings,
+  onView,
+  onCancel,
+}: BookingsTableProps) => {
   return (
     <Card className="border shadow-sm">
       <CardContent className="p-0">
         <Table>
+
+          {/* HEADER */}
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead>Booking ID</TableHead>
@@ -37,43 +69,79 @@ const BookingsTable = ({ bookings, onView, onCancel }: BookingsTableProps) => {
               <TableHead>Phòng</TableHead>
               <TableHead>Check In</TableHead>
               <TableHead>Check Out</TableHead>
-              <TableHead>Tổng giá</TableHead>
-              <TableHead>Đã chuyển</TableHead>
+              <TableHead>Tiền cọc</TableHead>
               <TableHead>Trạng thái</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
+
+          {/* BODY */}
           <TableBody>
             {bookings.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={8}
                   className="text-center py-8 text-muted-foreground"
                 >
-                  Không tìm thấy lịch đặt phòng
+                  Không có dữ liệu booking
                 </TableCell>
               </TableRow>
             ) : (
               bookings.map((booking) => (
-                <TableRow key={booking.id}>
-                  <TableCell className="font-medium">{booking.id}</TableCell>
-                  <TableCell>{booking.customerName}</TableCell>
-                  <TableCell>{booking.roomNumber}</TableCell>
-                  <TableCell>{booking.checkIn}</TableCell>
-                  <TableCell>{booking.checkOut}</TableCell>
-                  <TableCell>{formatVND(booking.totalAmount)}</TableCell>
-                  <TableCell>{formatVND(booking.deposit)}</TableCell>
+                <TableRow key={booking.bookingId}>
+
+                  {/* ID */}
+                  <TableCell className="font-medium">
+                    #{booking.bookingId}
+                  </TableCell>
+
+                  {/* CUSTOMER */}
+                  <TableCell>
+                    {booking.client?.fullName || "Khách lẻ"}
+                  </TableCell>
+
+                  {/* ROOM */}
+                  <TableCell>
+                    {booking.roomResponse?.roomNumber || "-"}
+                  </TableCell>
+
+                  {/* CHECK IN */}
+                  <TableCell>
+                    {new Date(
+                      booking.checkInDatetime
+                    ).toLocaleDateString("vi-VN")}
+                  </TableCell>
+
+                  {/* CHECK OUT */}
+                  <TableCell>
+                    {new Date(
+                      booking.checkOutDatetime
+                    ).toLocaleDateString("vi-VN")}
+                  </TableCell>
+
+                  {/* DEPOSIT */}
+                  <TableCell>
+                    {formatVND(booking.depositAmount)}
+                  </TableCell>
+
+                  {/* STATUS */}
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={statusStyles[booking.status]}
+                      className={
+                        statusStyles[booking.status.toLowerCase()] ||
+                        "bg-muted text-muted-foreground"
+                      }
                     >
-                      {booking.status.charAt(0).toUpperCase() +
-                        booking.status.slice(1)}
+                      {booking.status.toUpperCase()}
                     </Badge>
                   </TableCell>
+
+                  {/* ACTION */}
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex justify-end gap-1">
+
+                      {/* VIEW */}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -81,22 +149,27 @@ const BookingsTable = ({ bookings, onView, onCancel }: BookingsTableProps) => {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      {booking.status !== "cancelled" && (
+
+                      {/* CANCEL */}
+                      {booking.status.toLowerCase() !== "cancelled" && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive"
                           onClick={() => onCancel(booking)}
                         >
                           <XCircle className="w-4 h-4" />
                         </Button>
                       )}
+
                     </div>
                   </TableCell>
+
                 </TableRow>
               ))
             )}
           </TableBody>
+
         </Table>
       </CardContent>
     </Card>

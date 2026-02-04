@@ -54,7 +54,7 @@ namespace backend.Controllers
         [HttpGet("search-by-date")]
         public async Task<IActionResult> roomAvailableByDate([FromQuery] AvailableRoomRequest request)
         {
-            
+
             var response = await _roomService.roomAvailableByDate(request);
             return StatusCode(response.statusCode, response);
         }
@@ -65,5 +65,40 @@ namespace backend.Controllers
             var response = _roomService.getById(roomId);
             return StatusCode(response.statusCode, response);
         }
+
+        [HttpPatch("{roomId}/status")]
+        public async Task<IActionResult> ChangeStatusRoom(
+            int roomId,
+            [FromBody] ChangeStatusRequest request
+        )
+        {
+            if (request == null || string.IsNullOrEmpty(request.Status))
+            {
+                return BadRequest("Status is required");
+            }
+
+            var allowStatus = new[]
+            {
+                "available",
+                "occupied",
+                "booked",
+                "cleaning",
+                "maintenance",
+                "inactive"
+            };
+
+            if (!allowStatus.Contains(request.Status))
+            {
+                return BadRequest("Invalid status");
+            }
+
+            var response = await _roomService.ChangeStatusRoom(
+                roomId,
+                request.Status
+            );
+
+            return StatusCode(response.statusCode, response);
+            }
+        }
+
     }
-}

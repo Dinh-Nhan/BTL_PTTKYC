@@ -24,5 +24,7 @@ namespace backend.Repository.interfaces
             DateTime checkOutDate,
             int adult,
             int children);
+
+        Task<bool> ChangeStatusRoom(int roomId, string status);
     }
 }

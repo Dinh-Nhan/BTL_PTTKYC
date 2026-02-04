@@ -46,12 +46,15 @@ export interface Invoice {
 }
 
 export interface Staff {
-  id: string;
+  id: number;
   name: string;
   email: string;
+  password: string;
   phone: string;
-  role: "receptionist" | "accountant" | "manager" | "housekeeping";
-  status: "active" | "inactive";
+  birth: string;
+  role: "0" | "1";
+  gender: "0" | "1";
+  status: "0" | "1";
   joinedAt: string;
 }
 
@@ -298,55 +301,6 @@ export const invoices: Invoice[] = [
     status: "refunded",
     createdAt: "2026-01-08",
     paidAt: "2026-01-10",
-  },
-];
-
-// Mock staff data
-export const staffMembers: Staff[] = [
-  {
-    id: "S001",
-    name: "Sarah Miller",
-    email: "sarah@hotel.com",
-    phone: "+1 555-0101",
-    role: "receptionist",
-    status: "active",
-    joinedAt: "2024-03-15",
-  },
-  {
-    id: "S002",
-    name: "Mike Thompson",
-    email: "mike@hotel.com",
-    phone: "+1 555-0102",
-    role: "accountant",
-    status: "active",
-    joinedAt: "2023-08-20",
-  },
-  {
-    id: "S003",
-    name: "Emily Davis",
-    email: "emily@hotel.com",
-    phone: "+1 555-0103",
-    role: "manager",
-    status: "active",
-    joinedAt: "2022-01-10",
-  },
-  {
-    id: "S004",
-    name: "James Wilson",
-    email: "james@hotel.com",
-    phone: "+1 555-0104",
-    role: "housekeeping",
-    status: "active",
-    joinedAt: "2024-06-01",
-  },
-  {
-    id: "S005",
-    name: "Linda Garcia",
-    email: "linda@hotel.com",
-    phone: "+1 555-0105",
-    role: "receptionist",
-    status: "inactive",
-    joinedAt: "2023-02-28",
   },
 ];
 

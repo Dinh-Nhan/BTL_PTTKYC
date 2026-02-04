@@ -217,6 +217,21 @@ namespace backend.Controllers
 
             return Ok(draft);
         }
+        [HttpPatch("{id}/deposit")]
+        public async Task<IActionResult> UpdateDeposit(
+            int id,
+            [FromBody] UpdateDepositRequest request
+        )
+        {
+                    var response = await _bookingService.UpdateDeposit(
+                        id,
+                        request.DepositAmount
+                    );
+
+                    return StatusCode(response.statusCode, response);
+        }
+
+
 
         #region helper methods
         private string GetClientIPv4Address()

@@ -27,6 +27,19 @@ namespace backend.Repository.implementations
             return true;
         }
 
+        public async Task<bool> ChangeStatusRoom(int roomId, string status)
+        {
+            var room = await _context.Rooms.FindAsync(roomId);
+            if (room == null)
+            {
+                return false;
+            }
+
+            room.Status = status;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public  bool deactiveRoom(int roomId)
         {
             var room =  _context.Rooms.Find(roomId);

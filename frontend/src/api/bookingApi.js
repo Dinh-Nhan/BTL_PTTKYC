@@ -1,24 +1,33 @@
 import axiosClient from "./axiosClient";
 
-export const bookingApi = {
-  createBooking: (bookingData) => {
-    return axiosClient.post("/api/Booking/create-booking", { ...bookingData });
+const bookingApi = {
+  createBooking: (data) => {
+    return axiosClient.post("/api/Booking/create-booking", data);
   },
 
-  getAllBookings: () => {
-    return axiosClient.get("/api/booking");
+  getAll: () => {
+    return axiosClient.get("/api/Booking");
   },
 
-  getBookingById: (bookingId) => {
-    return axiosClient.get(`/api/booking/${bookingId}`);
+  updateDeposit: (id, deposit) => {
+    return axiosClient.patch(`/api/Booking/${id}/deposit`, {
+      depositAmount: deposit,
+    });
   },
 
-  cancelBooking: (bookingId) => {
-    return axiosClient.patch(`/api/booking/canel-booking/${bookingId}`);
+
+  getById: (id) => {
+    return axiosClient.get(`/api/Booking/${id}`);
   },
 
-  querydrBooking: (bookingId) => {
-    return axiosClient.get(`/api/booking/querydr/${bookingId}`);
+  cancel: (id, reason) => {
+    return axiosClient.patch(`/api/Booking/cancel-booking/${id}`, {
+      reason,
+    });
+  },
+
+  queryTransaction: (id) => {
+    return axiosClient.get(`/api/Booking/query-transaction/${id}`);
   },
   createDraft: (draftData) => {
     return axiosClient.post("/api/Booking/draft", { ...draftData });

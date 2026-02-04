@@ -76,10 +76,10 @@ const EditRoomModal = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="single">Phòng đơn</SelectItem>
-                  <SelectItem value="double">Phòng đôi</SelectItem>
-                  <SelectItem value="suite">Suite</SelectItem>
-                  <SelectItem value="deluxe">Deluxe</SelectItem>
+                  <SelectItem value="single">Tiêu chuẩn</SelectItem>
+                  <SelectItem value="double">Cao cấp</SelectItem>
+                  <SelectItem value="suite">Siêu cao cấp</SelectItem>
+                  <SelectItem value="deluxe">Gia đình</SelectItem>
                 </SelectContent>
               </Select>
             </div>

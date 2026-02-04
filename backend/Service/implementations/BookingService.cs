@@ -284,7 +284,7 @@ namespace backend.Service.implementations
 
                 try
                 {
-                    booking.Status = "CANCELLED";
+                    booking.Status = "cancelled";
                     booking.UpdatedAt = DateTime.UtcNow;
                     booking.Note = $"ĐÃ HỦY - Lí do: {request.reasonCancel}";
                      _bookingRepository.Update(booking); 
@@ -944,6 +944,22 @@ namespace backend.Service.implementations
         private string FormatCurrency(decimal amount)
         {
             return $"{amount:N0} VNĐ";
+        }
+
+        public async Task<ApiResponse<bool>> UpdateDeposit(int bookingId, decimal deposit)
+        {
+            var result = await _bookingRepository.UpdateDeposit(bookingId, deposit);
+            if (result)
+            {
+                return _apiResponseFactory.Success(true, "Deposit updated successfully");
+            }
+            else
+            {
+                return _apiResponseFactory.Fail<bool>(
+                    StatusCodes.Status500InternalServerError,
+                    "Failed to update deposit or not found"
+                );
+            }
         }
         #endregion
     }

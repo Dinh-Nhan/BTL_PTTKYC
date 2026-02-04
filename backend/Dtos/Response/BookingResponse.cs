@@ -29,6 +29,7 @@ namespace backend.Dtos.Response
 
 
         public RoomResponse roomResponse { get; set; } = null!;
+        public ClientResponse client { get; set; } = null!;
 
     }
 }
