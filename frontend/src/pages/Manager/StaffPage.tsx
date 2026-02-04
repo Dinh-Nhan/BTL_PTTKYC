@@ -1,7 +1,5 @@
 import { useAuth } from "@/contexts/auth-context";
-import type { Staff } from "@/lib/mock-data";
-import { Suspense, useState } from "react";
-import { staffMembers as initialStaff } from "@/lib/mock-data";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import Header from "@/components/admin/layout/header";
 import { Plus, Search } from "lucide-react";
@@ -11,11 +9,22 @@ import StaffTable from "@/components/admin/staff/staff-table";
 import StaffModal from "@/components/admin/staff/staff-modal";
 import ConfirmDialog from "@/components/admin/shared/confirm-dialog";
 import { redirect } from "react-router-dom";
+import userApi from "@/api/userApi";
+
+interface Staff {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: "employee";
+  status: "active" | "inactive";
+  joinedAt: string;
+}
 
 const StaffPage = () => {
   const { isAdmin } = useAuth();
-  const [staffList, setStaffList] = useState<Staff[]>(initialStaff);
-  const [filteredStaff, setFilteredStaff] = useState<Staff[]>(initialStaff);
+  const [staffList, setStaffList] = useState<Staff[]>([]);
+  const [filteredStaff, setFilteredStaff] = useState<Staff[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [deletingStaff, setDeletingStaff] = useState<Staff | null>(null);
@@ -24,6 +33,20 @@ const StaffPage = () => {
   if (!isAdmin) {
     redirect("/");
   }
+
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const res = await userApi.getAll();
+        setStaffList(res.data.result);
+      } catch (error) {
+        console.log("Failed to fetch staff:", error);
+        toast.error("Lỗi khi lấy dữ liệu nhân viên");
+      }
+    };
+
+    fetchStaff();
+  }, []);
 
   const handleSearch = (query: string) => {
     if (!query) {
@@ -113,8 +136,8 @@ const StaffPage = () => {
       <ConfirmDialog
         open={!!deletingStaff}
         onOpenChange={(open) => !open && setDeletingStaff(null)}
-        title="Delete Staff"
-        description={`Are you sure you want to delete ${deletingStaff?.name}? This action cannot be undone.`}
+        title="Xóa nhân viên"
+        description={`Bạn có chắc muốn xóa ${deletingStaff?.name}? Đây là thao tác không thể hoàn tác.`}
         onConfirm={handleDeleteStaff}
         confirmText="Delete"
         variant="destructive"

@@ -1,8 +1,8 @@
 import axiosClient from "./axiosClient";
 
-export const userApi = {
+const userApi = {
   getAll: () => {
-    return axiosClient.get("/api/user");
+    return axiosClient.get("/api/User");
   },
 
   addUser: (data) => {
@@ -33,3 +33,4 @@ export const userApi = {
     return axiosClient.patch(`/api/user/active/${userId}`);
   },
 };
+export default userApi;
