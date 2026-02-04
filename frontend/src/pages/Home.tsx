@@ -3,7 +3,9 @@ import RoomListing from "@/components/client/RoomListing";
 import SearchPanel from "@/components/client/SearchPanel";
 import { useState, useEffect } from "react";
 import Swal from 'sweetalert2';
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams as useRouterSearchParams } from "react-router-dom";
+import bookingApi from "@/api/bookingApi";
+
 const Home = () => {
   const [searchParams, setSearchParams] = useState({
     checkIn: "",
@@ -14,20 +16,40 @@ const Home = () => {
   });
 
   const [rooms, setRooms] = useState([]);
+  const [autoOpenRoomId, setAutoOpenRoomId] = useState<number | null>(null);
+  
+  const [urlParams] = useRouterSearchParams();
+  const navigate = useNavigate();
+
   const handleSearchResult = (results: any[]) => {
     setRooms(results);
   };
 
-  const navigate = useNavigate();
-
-  const urlSearchParams = new URLSearchParams(window.location.search);
+  // 🔥 Xử lý email verification callback
   useEffect(() => {
-    const payment = urlSearchParams.get('payment');
-    const bookingId = urlSearchParams.get('bookingId');
-    const message = urlSearchParams.get('message');
+    const emailVerified = urlParams.get('emailVerified');
+    const roomId = urlParams.get('roomId');
+    
+    if (emailVerified === '1' && roomId) {
+      const roomIdNum = parseInt(roomId);
+      
+      // Set roomId để RoomListing auto-open modal
+      setAutoOpenRoomId(roomIdNum);
+      
+      // Xóa URL params ngay lập tức (không chờ)
+      navigate('/', { replace: true });
+    }
+  }, [urlParams, navigate]);
+
+  // 🔥 Xử lý payment callback
+  useEffect(() => {
+    const payment = urlParams.get('payment');
+    const bookingId = urlParams.get('bookingId');
+    const message = urlParams.get('message');
+
+
 
     if (payment === 'success' && bookingId) {
-      // Hiển thị thông báo thành công
       Swal.fire({
         icon: 'success',
         title: 'Thanh toán thành công!',
@@ -36,23 +58,20 @@ const Home = () => {
           <p class="font-semibold mt-2">Mã booking: <span class="text-orange-600">${bookingId}</span></p>
           <p class="text-sm text-gray-600 mt-2">Email xác nhận đã được gửi đến hộp thư của bạn</p>
         `,
-        confirmButtonText: 'Xem chi tiết',
         confirmButtonColor: '#ff6b35',
         showCancelButton: true,
         cancelButtonText: 'Đóng',
       }).then((result) => {
+        console.log('Gửi email xác nhận booking...', bookingId);
+        bookingApi.sendBookingEmail(parseInt(bookingId));
         if (result.isConfirmed) {
-          // Redirect đến trang chi tiết booking (nếu có)
-          // navigate(`/booking/${bookingId}`);
           console.log('Xem chi tiết booking:', bookingId);
         }
       });
 
-      // Xóa query params khỏi URL sau khi hiển thị
       navigate('/', { replace: true });
     } 
     else if (payment === 'failed') {
-      // Hiển thị thông báo thất bại
       Swal.fire({
         icon: 'error',
         title: 'Thanh toán thất bại!',
@@ -61,21 +80,23 @@ const Home = () => {
         confirmButtonColor: '#dc2626',
       });
 
-      // Xóa query params
       navigate('/', { replace: true });
     }
-  }, [urlSearchParams, navigate]);
+  }, [urlParams, navigate]);
+
   return (
     <>
       <main className="min-h-screen bg-background">
         <Header />
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <SearchPanel 
-          onSearch={handleSearchResult} />
+          <SearchPanel onSearch={handleSearchResult} />
           <RoomListing
-          rooms={rooms}
-          setRooms={setRooms} 
-          searchParams={searchParams} />
+            rooms={rooms}
+            setRooms={setRooms} 
+            searchParams={searchParams}
+            autoOpenRoomId={autoOpenRoomId}
+            onModalOpened={() => setAutoOpenRoomId(null)}
+          />
         </div>
       </main>
     </>
