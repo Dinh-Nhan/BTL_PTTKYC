@@ -1,12 +1,12 @@
 import axiosClient from "./axiosClient";
 
-export const userApi = {
+const userApi = {
   getAll: () => {
-    return axiosClient.get("/api/user");
+    return axiosClient.get("/api/User");
   },
 
   addUser: (data) => {
-    return axiosClient.port("/api/user", data);
+    return axiosClient.post("/api/user", data);
   },
 
   searchUserByInfo: (info) => {
@@ -33,3 +33,4 @@ export const userApi = {
     return axiosClient.patch(`/api/user/active/${userId}`);
   },
 };
+export default userApi;
