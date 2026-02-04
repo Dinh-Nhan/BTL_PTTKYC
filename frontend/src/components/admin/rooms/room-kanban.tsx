@@ -2,8 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatVND } from "@/lib/format";
-import type { Room } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+
 import {
   Bath,
   Building2,
@@ -14,225 +14,384 @@ import {
   Wind,
   Wine,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import roomTypeApi from "@/api/roomTypeApi";
 
-interface RoomKanbanProps {
-  rooms: Room[];
-  onEdit: (room: Room) => void;
-  onStatusChange: (roomId: string, newStatus: Room["status"]) => void;
-}
+import { useEffect, useState } from "react";
+
+import roomApi from "@/api/roomApi";
+
+/* ================= TYPE ================= */
+
+type RoomStatus =
+  | "available"
+  | "occupied"
+  | "booked"
+  | "cleaning"
+  | "maintenance"
+  | "inactive";
 
 interface RoomType {
   roomTypeId: number;
   typeName: string;
+  basePrice: number;
+  amenities: string;
 }
+
+interface Room {
+  roomId: number;
+  roomNumber: string;
+  floor: number;
+  status: RoomStatus;
+  note: string;
+
+  roomType: RoomType;
+}
+
+/* ================= PROPS ================= */
+
+interface RoomKanbanProps {
+  rooms: Room[]; 
+
+  onEdit: (room: Room) => void;
+
+  onStatusChange: (
+    roomId: number,
+    newStatus: RoomStatus
+  ) => Promise<void>;
+}
+
+
+/* ================= COMPONENT ================= */
 
 const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
   const [draggedRoom, setDraggedRoom] = useState<Room | null>(null);
-  const [dragOverStatus, setDragOverStatus] = useState<Room["status"] | null>(
-    null
-  );
 
-  const [typeRooms, setTypeRooms] = useState<RoomType[]>([]);
+  const [dragOverStatus, setDragOverStatus] =
+    useState<RoomStatus | null>(null);
+
+  /* ================= STATE ================= */
+
+  const [roomsByStatus, setRoomsByStatus] = useState<
+    Record<RoomStatus, Room[]>
+  >({
+    available: [],
+    occupied: [],
+    booked: [],
+    cleaning: [],
+    maintenance: [],
+    inactive: [],
+  });
 
   useEffect(() => {
-    const getRoomType = async () => {
-      try {
-        const res = await roomTypeApi.getAll();
-        // Cấu trúc API của bạn: res.data.result
-        setTypeRooms(res.data.result);
-      } catch (error) {
-        console.error("Error fetching room types:", error);
-      }
+    const grouped: Record<RoomStatus, Room[]> = {
+      available: [],
+      occupied: [],
+      booked: [],
+      cleaning: [],
+      maintenance: [],
+      inactive: [],
     };
-    getRoomType(); 
-  }, []);
 
-  
-  const statusConfig = {
+    rooms.forEach((room) => {
+      grouped[room.status].push(room);
+    });
+
+    setRoomsByStatus(grouped);
+  }, [rooms]);
+
+
+  /* ================= FETCH ================= */
+
+  // useEffect(() => {
+  //   const getAllRoom = async () => {
+  //     try {
+  //       const res = await roomApi.getAll();
+
+  //       const data: Room[] = res.data.result;
+
+  //       setRoomsByStatus({
+  //         available: data.filter((r) => r.status === "available"),
+
+  //         occupied: data.filter((r) => r.status === "occupied"),
+
+  //         booked: data.filter((r) => r.status === "booked"),
+
+  //         cleaning: data.filter((r) => r.status === "cleaning"),
+
+  //         maintenance: data.filter((r) => r.status === "maintenance"),
+
+  //         inactive: data.filter((r) => r.status === "inactive"),
+  //       });
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   };
+
+  //   getAllRoom();
+  // }, []);
+
+  /* ================= STATUS CONFIG ================= */
+
+  const statusConfig: Record<
+    RoomStatus,
+    {
+      label: string;
+      color: string;
+      headerColor: string;
+    }
+  > = {
     available: {
       label: "Có sẵn",
-      color: "bg-success/10 border-success/30",
-      headerColor: "bg-success text-success-foreground",
-      badgeVariant: "default" as const,
+      color: "bg-green-100 border-green-300",
+      headerColor: "bg-green-500 text-white",
     },
+
+    occupied: {
+      label: "Đang phục vụ",
+      color: "bg-blue-100 border-blue-300",
+      headerColor: "bg-blue-500 text-white",
+    },
+
     booked: {
       label: "Đã đặt",
-      color: "bg-primary/10 border-primary/30",
-      headerColor: "bg-primary text-primary-foreground",
-      badgeVariant: "secondary" as const,
+      color: "bg-purple-100 border-purple-300",
+      headerColor: "bg-purple-500 text-white",
     },
+
+    cleaning: {
+      label: "Đang dọn dẹp",
+      color: "bg-yellow-100 border-yellow-300",
+      headerColor: "bg-yellow-500 text-black",
+    },
+
     maintenance: {
       label: "Bảo trì",
-      color: "bg-warning/10 border-warning/30",
-      headerColor: "bg-warning text-warning-foreground",
-      badgeVariant: "outline" as const,
+      color: "bg-orange-100 border-orange-300",
+      headerColor: "bg-orange-500 text-white",
+    },
+
+    inactive: {
+      label: "Ngừng hoạt động",
+      color: "bg-gray-100 border-gray-300",
+      headerColor: "bg-gray-500 text-white",
     },
   };
 
-  const typeLabels = typeRooms.reduce((acc, curr) => {
-    acc[curr.roomTypeId] = curr.typeName;
-    return acc;
-  }, {} as Record<number | string, string>);
+  const columns = Object.keys(statusConfig) as RoomStatus[];
 
-  // const typeLabels: Record<Room["type"], string> = {
-  //   single: "Phòng đơn",
-  //   double: "Phòng đôi",
-  //   suite: "Suite",
-  //   deluxe: "Deluxe",
-  // };
+  /* ================= ICON ================= */
 
   const amenityIcons: Record<string, JSX.Element> = {
-    WiFi: <Wifi className="h-3 w-3" />,
+    Wifi: <Wifi className="h-3 w-3" />,
     TV: <Tv className="h-3 w-3" />,
-    AC: <Wind className="h-3 w-3" />,
-    "Mini Bar": <Wine className="h-3 w-3" />,
-    Jacuzzi: <Bath className="h-3 w-3" />,
-    Balcony: <Building2 className="h-3 w-3" />,
+    "Máy lạnh": <Wind className="h-3 w-3" />,
+    "Tủ lạnh mini": <Wine className="h-3 w-3" />,
+    "Bồn tắm": <Bath className="h-3 w-3" />,
+    "Ban công": <Building2 className="h-3 w-3" />,
   };
 
+  /* ================= DRAG ================= */
 
-
-  const columns: Room["status"][] = ["available", "booked", "maintenance"];
-
-  const handleDragStart = (e: React.DragEvent, room: Room) => {
+  const handleDragStart = (
+    e: React.DragEvent,
+    room: Room
+  ) => {
     setDraggedRoom(room);
     e.dataTransfer.effectAllowed = "move";
   };
+
+  const handleDrop = async (
+    e: React.DragEvent,
+    status: RoomStatus
+  ) => {
+    e.preventDefault();
+
+    if (!draggedRoom) return;
+
+    const oldStatus = draggedRoom.status;
+
+    if (oldStatus === status) return;
+
+    // Update UI trước (Optimistic UI)
+    moveRoom(draggedRoom.roomId, oldStatus, status);
+
+    try {
+      // Gọi API và đợi kết quả
+      await onStatusChange(draggedRoom.roomId, status);
+    } catch (error) {
+      console.error("Update status failed:", error);
+
+      // Rollback lại UI nếu lỗi
+      moveRoom(draggedRoom.roomId, status, oldStatus);
+
+      alert("Cập nhật trạng thái thất bại!");
+    }
+
+    setDraggedRoom(null);
+    setDragOverStatus(null);
+  };
+
 
   const handleDragEnd = () => {
     setDraggedRoom(null);
     setDragOverStatus(null);
   };
 
-  const handleDragOver = (e: React.DragEvent, status: Room["status"]) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setDragOverStatus(status);
+
+  const moveRoom = (
+    roomId: number,
+    from: RoomStatus,
+    to: RoomStatus
+  ) => {
+    setRoomsByStatus((prev) => {
+      const source = [...prev[from]];
+      const target = [...prev[to]];
+
+      const index = source.findIndex(
+        (r) => r.roomId === roomId
+      );
+
+      if (index === -1) return prev;
+
+      const [movedRoom] = source.splice(index, 1);
+
+      movedRoom.status = to;
+
+      target.unshift(movedRoom); // đưa lên đầu cột mới
+
+      return {
+        ...prev,
+        [from]: source,
+        [to]: target,
+      };
+    });
   };
 
-  const handleDragLeave = () => {
-    setDragOverStatus(null);
-  };
 
-  const handleDrop = (e: React.DragEvent, status: Room["status"]) => {
-    e.preventDefault();
-    if (draggedRoom && draggedRoom.status !== status) {
-      onStatusChange(draggedRoom.id, status);
-    }
-    setDraggedRoom(null);
-    setDragOverStatus(null);
-  };
-
-  const getRoomsByStatus = (status: Room["status"]) =>
-    rooms.filter((room) => room.status === status);
+  /* ================= RENDER ================= */
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-4 h-full">
       {columns.map((status) => {
         const config = statusConfig[status];
-        const statusRooms = getRoomsByStatus(status);
+
+        const statusRooms = roomsByStatus[status];
 
         return (
           <div
             key={status}
             className={cn(
-              "flex flex-col rounded-xl border-2 transition-all duration-200",
+              "flex flex-col rounded-xl border-2",
               config.color,
-              dragOverStatus === status && "ring-2 ring-primary ring-offset-2"
+              dragOverStatus === status &&
+                "ring-2 ring-primary ring-offset-2"
             )}
-            onDragOver={(e) => handleDragOver(e, status)}
-            onDragLeave={handleDragLeave}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOverStatus(status);
+            }}
             onDrop={(e) => handleDrop(e, status)}
           >
-            <div className={cn("px-4 py-3 rounded-t-lg", config.headerColor)}>
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{config.label}</h3>
-                <Badge
-                  variant="secondary"
-                  className="bg-background/20 text-inherit"
-                >
+            {/* HEADER */}
+            <div
+              className={cn(
+                "px-4 py-3 rounded-t-lg",
+                config.headerColor
+              )}
+            >
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold">
+                  {config.label}
+                </h3>
+
+                <Badge className="bg-white/30 text-white">
                   {statusRooms.length}
                 </Badge>
               </div>
             </div>
 
-            <div className="flex-1 p-3 space-y-3 overflow-y-auto min-h-[400px] max-h-[calc(100vh-320px)]">
+            {/* BODY */}
+            <div className="flex-1 p-3 space-y-3 overflow-y-auto min-h-[400px]">
               {statusRooms.length === 0 ? (
-                <div className="flex items-center justify-center h-24 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
+                <div className="h-24 flex items-center justify-center text-sm text-muted-foreground border border-dashed rounded-lg">
                   Không có phòng
                 </div>
               ) : (
-                statusRooms.map((room) => (
-                  <Card
-                    key={room.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, room)}
-                    onDragEnd={handleDragEnd}
-                    className={cn(
-                      "cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md",
-                      draggedRoom?.id === room.id && "opacity-50 scale-95"
-                    )}
-                  >
-                    <CardHeader className="p-3 pb-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <GripVertical className="h-4 w-4 text-muted-foreground" />
-                          <CardTitle className="text-lg font-bold">
-                            Phòng {room.number}
-                          </CardTitle>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit(room);
-                          }}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                          <span className="sr-only">Chỉnh sửa</span>
-                        </Button>
-                      </div>
-                    </CardHeader>
+                statusRooms.map((room) => {
+                  const amenities =
+                    room.roomType?.amenities
+                      ?.split(",")
+                      .map((a) => a.trim()) || [];
 
-                    <CardContent className="p-3 pt-0 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-xs">
-                          {/* 4. Hiển thị tên loại phòng dựa trên ID */}
-                          {typeLabels[room.type] || "Chưa xác định"}
-                        </Badge>
-                        <span className="text-sm font-semibold text-primary">
-                          {formatVND(room.price)}/đêm
-                        </span>
-                      </div>
+                  return (
+                    <Card
+                      key={room.roomId}
+                      draggable
+                      onDragStart={(e) =>
+                        handleDragStart(e, room)
+                      }
+                      onDragEnd={handleDragEnd}
+                      className="cursor-grab hover:shadow-md"
+                    >
+                      <CardHeader className="p-3 pb-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex gap-2 items-center">
+                            <GripVertical className="h-4 w-4" />
 
-                      <div className="text-xs text-muted-foreground">
-                        Tầng {room.floor}
-                      </div>
+                            <CardTitle className="text-base">
+                              Phòng {room.roomNumber}
+                            </CardTitle>
+                          </div>
 
-                      <div className="flex flex-wrap gap-1.5">
-                        {room.amenities.slice(0, 4).map((amenity) => (
-                          <div
-                            key={amenity}
-                            className="flex items-center gap-1 px-2 py-1 bg-muted rounded-md text-xs"
-                            title={amenity}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onEdit(room)}
                           >
-                            {amenityIcons[amenity]}
-                            <span className="hidden sm:inline">{amenity}</span>
-                          </div>
-                        ))}
-                        {room.amenities.length > 4 && (
-                          <div className="px-2 py-1 bg-muted rounded-md text-xs text-muted-foreground">
-                            +{room.amenities.length - 4}
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="p-3 pt-0 space-y-2">
+                        {/* TYPE + PRICE */}
+                        <div className="flex justify-between">
+                          <Badge
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            {room.roomType?.typeName}
+                          </Badge>
+
+                          <span className="text-sm font-semibold text-primary">
+                            {formatVND(
+                              room.roomType?.basePrice || 0
+                            )}
+                          </span>
+                        </div>
+
+                        {/* FLOOR */}
+                        <div className="text-xs text-muted-foreground">
+                          Tầng {room.floor}
+                        </div>
+
+                        {/* AMENITIES */}
+                        <div className="flex flex-wrap gap-1">
+                          {amenities
+                            .slice(0, 4)
+                            .map((a) => (
+                              <div
+                                key={a}
+                                className="flex gap-1 items-center px-2 py-1 bg-muted rounded text-xs"
+                              >
+                                {amenityIcons[a]}
+                                {a}
+                              </div>
+                            ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
               )}
             </div>
           </div>

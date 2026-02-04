@@ -54,6 +54,19 @@ namespace backend.Service.implementations
             return _apiResponseFactory.Success(true);
         }
 
+        public async Task<ApiResponse<bool>> ChangeStatusRoom(int roomId, string status)
+        {
+            var result = await _roomRepository.ChangeStatusRoom(roomId, status);
+            if (!result)
+            {
+                return _apiResponseFactory.Fail<bool>(
+                    StatusCodes.Status500InternalServerError,
+                    "Failed to change room status"
+                    );
+            }
+            return _apiResponseFactory.Success(true);
+        }
+
         public ApiResponse<bool> deactiveRoom(int roomId)
         {
             if (roomId <= 0)

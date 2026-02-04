@@ -1,3 +1,4 @@
+import axios from "axios";
 import axiosClient from "./axiosClient";
 
 const roomApi = {
@@ -27,6 +28,12 @@ const roomApi = {
   getRoomById(roomId) {
     return axiosClient.get(`/api/Room/${roomId}`);
   },
+
+  changeStatusRoom(roomId, status) {
+    return axiosClient.patch(`/api/Room/${roomId}/status`, {
+      status: status,
+    })
+  }
 };
 
 export default roomApi;
