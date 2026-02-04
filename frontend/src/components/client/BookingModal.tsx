@@ -18,7 +18,7 @@ const BookingModal = ({ room, onClose }) => {
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvc, setCardCvc] = useState("");
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasProcessedVerification, setHasProcessedVerification] = useState(false);
 
@@ -28,9 +28,9 @@ const BookingModal = ({ room, onClose }) => {
   const nights =
     checkIn && checkOut
       ? Math.ceil(
-          (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
-            (1000 * 60 * 60 * 24),
-        )
+        (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
+        (1000 * 60 * 60 * 24),
+      )
       : 1;
 
   const totalPrice = room.price * nights;
@@ -51,20 +51,20 @@ const BookingModal = ({ room, onClose }) => {
     today.setHours(0, 0, 0, 0);
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
-    
+
     if (checkInDate < today) return false;
     if (checkOutDate <= checkInDate) return false;
-    
+
     return true;
   };
 
   const isStep1Valid = isValidDates();
-  const isStep2Valid = 
-    fullName.trim() !== "" && 
-    isValidEmail(email) && 
+  const isStep2Valid =
+    fullName.trim() !== "" &&
+    isValidEmail(email) &&
     isValidPhone(phoneNumber) &&
     parseInt(adult) > 0;
-  const isStep3Valid = 
+  const isStep3Valid =
     cardNumber.replace(/\s/g, "").length >= 13 &&
     cardExpiry.match(/^(0[1-9]|1[0-2])\/\d{2}$/) !== null &&
     cardCvc.length >= 3;
@@ -139,14 +139,14 @@ const BookingModal = ({ room, onClose }) => {
       }
     } catch (error: any) {
       console.error("Error processing booking:", error);
-      
+
       Swal.fire({
         icon: "error",
         title: "Có lỗi xảy ra",
         text: error.response?.data?.message || error.message || "Vui lòng thử lại",
         confirmButtonColor: "#dc2626",
       });
-      
+
       setIsProcessing(false);
     }
   };
@@ -279,7 +279,7 @@ const BookingModal = ({ room, onClose }) => {
               email: email,
               roomId: room.id,
             });
-            
+
             Swal.fire({
               icon: "success",
               title: "Email đã được gửi lại",
@@ -332,14 +332,13 @@ const BookingModal = ({ room, onClose }) => {
           {["dates", "details", "payment"].map((stepName, idx) => (
             <div key={stepName} className="flex items-center">
               <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors ${
-                  step === stepName
-                    ? "bg-accent text-accent-foreground"
-                    : ["dates", "details"].includes(stepName) &&
-                        ["dates", "details", "payment"].indexOf(step) > idx
-                      ? "bg-secondary text-foreground"
-                      : "bg-secondary text-muted-foreground"
-                }`}
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors ${step === stepName
+                  ? "bg-accent text-accent-foreground"
+                  : ["dates", "details"].includes(stepName) &&
+                    ["dates", "details", "payment"].indexOf(step) > idx
+                    ? "bg-secondary text-foreground"
+                    : "bg-secondary text-muted-foreground"
+                  }`}
               >
                 {idx + 1}
               </div>
