@@ -17,8 +17,6 @@ import {
 
 import { useEffect, useState } from "react";
 
-import roomApi from "@/api/roomApi";
-
 /* ================= TYPE ================= */
 
 type RoomStatus =
@@ -40,7 +38,7 @@ interface Room {
   roomId: number;
   roomNumber: string;
   floor: number;
-  status: RoomStatus;
+  status: string; // 👈 để string cho an toàn backend
   note: string;
 
   roomType: RoomType;
@@ -49,7 +47,7 @@ interface Room {
 /* ================= PROPS ================= */
 
 interface RoomKanbanProps {
-  rooms: Room[]; 
+  rooms: Room[];
 
   onEdit: (room: Room) => void;
 
@@ -59,6 +57,16 @@ interface RoomKanbanProps {
   ) => Promise<void>;
 }
 
+/* ================= CONSTANT ================= */
+
+const VALID_STATUS: RoomStatus[] = [
+  "available",
+  "occupied",
+  "booked",
+  "cleaning",
+  "maintenance",
+  "inactive",
+];
 
 /* ================= COMPONENT ================= */
 
@@ -81,6 +89,8 @@ const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
     inactive: [],
   });
 
+  /* ================= GROUP DATA ================= */
+
   useEffect(() => {
     const grouped: Record<RoomStatus, Room[]> = {
       available: [],
@@ -92,42 +102,23 @@ const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
     };
 
     rooms.forEach((room) => {
-      grouped[room.status].push(room);
+      const status = room.status?.toLowerCase();
+
+      // Nếu status không hợp lệ → cho vào inactive
+      const safeStatus: RoomStatus = VALID_STATUS.includes(
+        status as RoomStatus
+      )
+        ? (status as RoomStatus)
+        : "inactive";
+
+      grouped[safeStatus].push({
+        ...room,
+        status: safeStatus,
+      });
     });
 
     setRoomsByStatus(grouped);
   }, [rooms]);
-
-
-  /* ================= FETCH ================= */
-
-  // useEffect(() => {
-  //   const getAllRoom = async () => {
-  //     try {
-  //       const res = await roomApi.getAll();
-
-  //       const data: Room[] = res.data.result;
-
-  //       setRoomsByStatus({
-  //         available: data.filter((r) => r.status === "available"),
-
-  //         occupied: data.filter((r) => r.status === "occupied"),
-
-  //         booked: data.filter((r) => r.status === "booked"),
-
-  //         cleaning: data.filter((r) => r.status === "cleaning"),
-
-  //         maintenance: data.filter((r) => r.status === "maintenance"),
-
-  //         inactive: data.filter((r) => r.status === "inactive"),
-  //       });
-  //     } catch (err) {
-  //       console.error(err);
-  //     }
-  //   };
-
-  //   getAllRoom();
-  // }, []);
 
   /* ================= STATUS CONFIG ================= */
 
@@ -207,20 +198,17 @@ const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
 
     if (!draggedRoom) return;
 
-    const oldStatus = draggedRoom.status;
+    const oldStatus = draggedRoom.status as RoomStatus;
 
     if (oldStatus === status) return;
 
-    // Update UI trước (Optimistic UI)
     moveRoom(draggedRoom.roomId, oldStatus, status);
 
     try {
-      // Gọi API và đợi kết quả
       await onStatusChange(draggedRoom.roomId, status);
     } catch (error) {
-      console.error("Update status failed:", error);
+      console.error(error);
 
-      // Rollback lại UI nếu lỗi
       moveRoom(draggedRoom.roomId, status, oldStatus);
 
       alert("Cập nhật trạng thái thất bại!");
@@ -230,12 +218,12 @@ const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
     setDragOverStatus(null);
   };
 
-
   const handleDragEnd = () => {
     setDraggedRoom(null);
     setDragOverStatus(null);
   };
 
+  /* ================= MOVE ================= */
 
   const moveRoom = (
     roomId: number,
@@ -256,7 +244,7 @@ const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
 
       movedRoom.status = to;
 
-      target.unshift(movedRoom); // đưa lên đầu cột mới
+      target.unshift(movedRoom);
 
       return {
         ...prev,
@@ -265,7 +253,6 @@ const RoomKanban = ({ rooms, onEdit, onStatusChange }: RoomKanbanProps) => {
       };
     });
   };
-
 
   /* ================= RENDER ================= */
 

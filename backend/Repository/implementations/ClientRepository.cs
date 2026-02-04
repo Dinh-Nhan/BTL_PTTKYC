@@ -30,6 +30,7 @@ namespace backend.Repository.implementations
             var clients = await _context.Clients
                 .Select(c => new ClientResponse
                 {
+                    ClientId = c.ClientId,
                     FullName = c.FullName,
                     PhoneNumber = c.PhoneNumber,
                     Email = c.Email,

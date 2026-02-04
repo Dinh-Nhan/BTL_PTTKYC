@@ -12,7 +12,6 @@ import ConfirmDialog from "@/components/admin/shared/confirm-dialog";
 
 import bookingApi from "@/api/booKingApi";
 
-
 /* ================= TYPE ================= */
 
 interface Booking {
@@ -31,13 +30,10 @@ interface Booking {
   };
 }
 
-
-
 /* ================= COMPONENT ================= */
 
 const BookingPage = () => {
   const [bookingsList, setBookingsList] = useState<Booking[]>([]);
-
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [viewingBooking, setViewingBooking] =
@@ -52,7 +48,7 @@ const BookingPage = () => {
     try {
       const res = await bookingApi.getAll();
 
-      setBookingsList(res.data.result);
+      setBookingsList(res.data.result || []);
     } catch (error) {
       console.log(error);
       toast.error("Không tải được danh sách booking");
@@ -62,6 +58,24 @@ const BookingPage = () => {
   useEffect(() => {
     fetchBookings();
   }, []);
+
+  /* ================= UPDATE STATUS ================= */
+
+  const updateBookingStatus = async (
+    bookingId: number,
+    status: string
+  ) => {
+    try {
+      await bookingApi.updateStatusBooking(bookingId, status);
+
+      await fetchBookings();
+
+      toast.success("Cập nhật trạng thái thành công");
+    } catch (error) {
+      console.log(error);
+      toast.error("Cập nhật trạng thái thất bại");
+    }
+  };
 
   /* ================= HANDLER ================= */
 
@@ -98,7 +112,6 @@ const BookingPage = () => {
     deposit: number
   ) => {
     try {
-      // Nếu backend có API update deposit thì gọi ở đây
       await bookingApi.updateDeposit(bookingId, deposit);
 
       await fetchBookings();
@@ -111,7 +124,7 @@ const BookingPage = () => {
   };
 
   /* ================= TEMP DATA ================= */
-  // Tạm thời để rỗng nếu chưa có API lấy phòng trống
+
   const availableRooms: any[] = [];
 
   /* ================= RENDER ================= */
@@ -153,6 +166,7 @@ const BookingPage = () => {
           !open && setViewingBooking(null)
         }
         onUpdateDeposit={handleUpdateDeposit}
+        onUpdateStatus={updateBookingStatus}
       />
 
       {/* CONFIRM CANCEL */}

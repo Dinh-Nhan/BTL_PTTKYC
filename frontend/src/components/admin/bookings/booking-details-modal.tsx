@@ -12,9 +12,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { useEffect, useState } from "react";
 
-// import { Booking } from "@/types/booking";
+/* ================= TYPES ================= */
 
 interface Booking {
   bookingId: number;
@@ -38,7 +46,13 @@ interface BookingDetailsModalProps {
   booking: Booking | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpdateDeposit: (bookingId: number, deposit: number) => void;
+
+  onUpdateDeposit: (bookingId: number, deposit: number) => Promise<void>;
+
+  onUpdateStatus: (
+    bookingId: number,
+    status: string
+  ) => Promise<void>;
 }
 
 /* ================= STYLE ================= */
@@ -56,14 +70,19 @@ const BookingDetailsModal = ({
   open,
   onOpenChange,
   onUpdateDeposit,
+  onUpdateStatus,
 }: BookingDetailsModalProps) => {
   const [deposit, setDeposit] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("");
 
-  /* Sync deposit when booking changes */
+  const [loadingDeposit, setLoadingDeposit] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState(false);
+
+  /* Sync data */
   useEffect(() => {
     if (booking) {
       setDeposit(booking.depositAmount);
+      setStatus(booking.status);
     }
   }, [booking]);
 
@@ -72,22 +91,34 @@ const BookingDetailsModal = ({
   /* ================= HANDLER ================= */
 
   const handleUpdateDeposit = async () => {
-    if (!booking) return;
-
     try {
-      setLoading(true);
+      setLoadingDeposit(true);
 
       await onUpdateDeposit(booking.bookingId, deposit);
 
-      onOpenChange(false); // đóng modal
+      onOpenChange(false);
     } catch (error) {
       console.error(error);
-      alert("Cập nhật thất bại");
+      alert("Cập nhật tiền cọc thất bại");
     } finally {
-      setLoading(false);
+      setLoadingDeposit(false);
     }
   };
 
+  const handleUpdateStatus = async () => {
+    try {
+      setLoadingStatus(true);
+
+      await onUpdateStatus(booking.bookingId, status);
+
+      onOpenChange(false);
+    } catch (error) {
+      console.error(error);
+      alert("Cập nhật trạng thái thất bại");
+    } finally {
+      setLoadingStatus(false);
+    }
+  };
 
   /* ================= RENDER ================= */
 
@@ -166,6 +197,60 @@ const BookingDetailsModal = ({
 
           </div>
 
+          {/* UPDATE STATUS */}
+          {booking.status !== "cancelled" && (
+
+            <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
+
+              <Label>Cập nhật trạng thái</Label>
+
+              <div className="flex gap-2">
+
+                <Select
+                  value={status}
+                  onValueChange={setStatus}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+
+                  <SelectContent>
+
+                    <SelectItem value="pending">
+                      Pending
+                    </SelectItem>
+
+                    <SelectItem value="unpaid">
+                      Unpaid
+                    </SelectItem>
+
+                    <SelectItem value="cancelled">
+                      Cancelled
+                    </SelectItem>
+
+                    <SelectItem value="paid">
+                      Paid
+                    </SelectItem>
+
+                    <SelectItem value="check-out">
+                      Check-out
+                    </SelectItem>
+
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  onClick={handleUpdateStatus}
+                  disabled={loadingStatus}
+                >
+                  {loadingStatus ? "..." : "Cập nhật"}
+                </Button>
+
+              </div>
+
+            </div>
+          )}
+
           {/* DEPOSIT */}
           {booking.status !== "cancelled" && (
 
@@ -185,9 +270,9 @@ const BookingDetailsModal = ({
 
                 <Button
                   onClick={handleUpdateDeposit}
-                  disabled={loading}
+                  disabled={loadingDeposit}
                 >
-                  {loading ? "..." : "Cập nhật"}
+                  {loadingDeposit ? "..." : "Cập nhật"}
                 </Button>
 
               </div>
