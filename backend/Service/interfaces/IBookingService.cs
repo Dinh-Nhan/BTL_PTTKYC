@@ -16,5 +16,6 @@ namespace backend.Service.interfaces
 
         Task<ApiResponse<RefundResponse>> RefundBooking(RefundRequest request, string ipAddress);
         Task<ApiResponse<VnpayQueryResponse>> QueryTransactionStatus(int bookingId, string ipAddress);
+        Task<ApiResponse<bool>> UpdateDeposit(int bookingId, decimal deposit);
     }
 }

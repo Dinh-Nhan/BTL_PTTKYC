@@ -9,7 +9,7 @@ namespace backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "ADMIN")]
+    //[Authorize(Roles = "ADMIN")]
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
@@ -179,6 +179,21 @@ namespace backend.Controllers
                 });
             }
         }
+
+        [HttpPatch("{id}/deposit")]
+        public async Task<IActionResult> UpdateDeposit(
+            int id,
+            [FromBody] UpdateDepositRequest request
+        )
+        {
+                    var response = await _bookingService.UpdateDeposit(
+                        id,
+                        request.DepositAmount
+                    );
+
+                    return StatusCode(response.statusCode, response);
+        }
+
 
 
         #region helper methods

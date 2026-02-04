@@ -1,60 +1,127 @@
-import { useState } from "react";
-
-import {
-  bookings as initialBookings,
-  rooms,
-  type Booking,
-} from "@/lib/mock-data";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
 import Header from "@/components/admin/layout/header";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+
 import BookingsTable from "@/components/admin/bookings/bookings-table";
 import CreateBookingModal from "@/components/admin/bookings/create-booking-modal";
 import BookingDetailsModal from "@/components/admin/bookings/booking-details-modal";
 import ConfirmDialog from "@/components/admin/shared/confirm-dialog";
 
+import bookingApi from "@/api/booKingApi";
+
+
+/* ================= TYPE ================= */
+
+interface Booking {
+  bookingId: number;
+  checkInDatetime: string;
+  checkOutDatetime: string;
+  depositAmount: number;
+  status: string;
+
+  roomResponse: {
+    roomNumber: string;
+  };
+
+  clientResponse?: {
+    fullName: string;
+  };
+}
+
+
+
+/* ================= COMPONENT ================= */
+
 const BookingPage = () => {
-  const [bookingsList, setBookingsList] = useState<Booking[]>(initialBookings);
+  const [bookingsList, setBookingsList] = useState<Booking[]>([]);
+
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
-  const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(
-    null,
-  );
+
+  const [viewingBooking, setViewingBooking] =
+    useState<Booking | null>(null);
+
+  const [cancellingBooking, setCancellingBooking] =
+    useState<Booking | null>(null);
+
+  /* ================= FETCH ================= */
+
+  const fetchBookings = async () => {
+    try {
+      const res = await bookingApi.getAll();
+
+      setBookingsList(res.data.result);
+    } catch (error) {
+      console.log(error);
+      toast.error("Không tải được danh sách booking");
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  /* ================= HANDLER ================= */
 
   const handleCreateBooking = (newBooking: Booking) => {
     setBookingsList((prev) => [newBooking, ...prev]);
+
     setShowCreateModal(false);
-    toast.success("Booking created successfully");
+
+    toast.success("Tạo booking thành công");
   };
 
-  const handleCancelBooking = () => {
+  const handleCancelBooking = async () => {
     if (!cancellingBooking) return;
 
-    setBookingsList((prev) =>
-      prev.map((b) =>
-        b.id === cancellingBooking.id
-          ? { ...b, status: "cancelled" as const }
-          : b,
-      ),
-    );
+    try {
+      await bookingApi.cancel(
+        cancellingBooking.bookingId,
+        "Admin hủy"
+      );
+
+      await fetchBookings();
+
+      toast.success("Đã hủy booking");
+    } catch (error) {
+      console.log(error);
+      toast.error("Hủy booking thất bại");
+    }
+
     setCancellingBooking(null);
-    toast.success("Booking cancelled successfully");
   };
 
-  const handleUpdateDeposit = (bookingId: string, deposit: number) => {
-    setBookingsList((prev) =>
-      prev.map((b) => (b.id === bookingId ? { ...b, deposit } : b)),
-    );
-    toast.success("Deposit updated successfully");
+  const handleUpdateDeposit = async (
+    bookingId: number,
+    deposit: number
+  ) => {
+    try {
+      // Nếu backend có API update deposit thì gọi ở đây
+      await bookingApi.updateDeposit(bookingId, deposit);
+
+      await fetchBookings();
+
+      toast.success("Cập nhật tiền cọc thành công");
+    } catch (error) {
+      console.log(error);
+      toast.error("Cập nhật thất bại");
+    }
   };
 
-  const availableRooms = rooms.filter((r) => r.status === "available");
+  /* ================= TEMP DATA ================= */
+  // Tạm thời để rỗng nếu chưa có API lấy phòng trống
+  const availableRooms: any[] = [];
+
+  /* ================= RENDER ================= */
 
   return (
     <div className="flex flex-col h-full">
       <Header title="Booking Management" />
+
       <div className="flex-1 p-6 space-y-4">
+        {/* BUTTON */}
         <div className="flex justify-end">
           <Button onClick={() => setShowCreateModal(true)}>
             <Plus className="w-4 h-4 mr-2" />
@@ -62,6 +129,7 @@ const BookingPage = () => {
           </Button>
         </div>
 
+        {/* TABLE */}
         <BookingsTable
           bookings={bookingsList}
           onView={setViewingBooking}
@@ -69,6 +137,7 @@ const BookingPage = () => {
         />
       </div>
 
+      {/* CREATE MODAL */}
       <CreateBookingModal
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
@@ -76,18 +145,24 @@ const BookingPage = () => {
         availableRooms={availableRooms}
       />
 
+      {/* DETAIL MODAL */}
       <BookingDetailsModal
         booking={viewingBooking}
         open={!!viewingBooking}
-        onOpenChange={(open) => !open && setViewingBooking(null)}
+        onOpenChange={(open) =>
+          !open && setViewingBooking(null)
+        }
         onUpdateDeposit={handleUpdateDeposit}
       />
 
+      {/* CONFIRM CANCEL */}
       <ConfirmDialog
         open={!!cancellingBooking}
-        onOpenChange={(open) => !open && setCancellingBooking(null)}
+        onOpenChange={(open) =>
+          !open && setCancellingBooking(null)
+        }
         title="Hủy đặt phòng"
-        description={`Bạn có chắc muốn hủy đặt phòng ${cancellingBooking?.id}? Thao tác này không thể khôi phục.`}
+        description={`Bạn có chắc muốn hủy đặt phòng #${cancellingBooking?.bookingId}? Thao tác này không thể khôi phục.`}
         onConfirm={handleCancelBooking}
         confirmText="Xác nhận"
         variant="destructive"
