@@ -29,6 +29,12 @@ const bookingApi = {
   queryTransaction: (id) => {
     return axiosClient.get(`/api/Booking/query-transaction/${id}`);
   },
+
+  updateStatusBooking: (id, status) => {
+    return axiosClient.patch(`/api/Booking/${id}/status`, {
+      status: status
+    })
+  },
 };
 
 export default bookingApi;

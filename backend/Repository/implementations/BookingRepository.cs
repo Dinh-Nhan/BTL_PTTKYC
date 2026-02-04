@@ -77,5 +77,18 @@ namespace backend.Repository.implementations
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> UpdateStatusById(int bookingId, string status)
+        {
+            var booking = await _context.Bookings.FindAsync(bookingId);
+            if (booking == null)
+            {
+                return false;
+            }
+            booking.Status = status;
+            _context.Bookings.Update(booking);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

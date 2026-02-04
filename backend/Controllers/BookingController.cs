@@ -194,7 +194,18 @@ namespace backend.Controllers
                     return StatusCode(response.statusCode, response);
         }
 
-
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateBookingStatus(
+            int id,
+            [FromBody] UpdateBookingStatusRequest request
+        )
+        {
+            var response = await _bookingService.UpdateStatusById(
+                id,
+                request.Status
+            );
+            return StatusCode(response.statusCode, response);
+        }
 
         #region helper methods
         private string GetClientIPv4Address()

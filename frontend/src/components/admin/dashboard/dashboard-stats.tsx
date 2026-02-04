@@ -33,7 +33,7 @@ const DashboardStats = () => {
           try {
             const res = await roomApi.getAll();
             const reservedRooms = res.data.result.filter(
-              room => room.status === "reserved"
+              room => room.status === "booked"
             );
             setRoomsReserved(reservedRooms.length);
           } catch (error) {

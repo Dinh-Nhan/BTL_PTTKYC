@@ -790,9 +790,9 @@ namespace backend.Service.implementations
             booking.TotalPrice = totalPrice;
             booking.DepositAmount = depositAmount;
             booking.NumberDay = numberOfDays;
-            booking.Status = "PENDING";
+            booking.Status = "pending";
             booking.CreatedAt = DateTime.UtcNow;
-            booking.PaymentStatus = "UNPAID";
+            booking.PaymentStatus = "unpaid";
             return booking;
             
         }
@@ -958,6 +958,22 @@ namespace backend.Service.implementations
                 return _apiResponseFactory.Fail<bool>(
                     StatusCodes.Status500InternalServerError,
                     "Failed to update deposit or not found"
+                );
+            }
+        }
+
+        public async Task<ApiResponse<bool>> UpdateStatusById(int bookingId, string status)
+        {
+            var result = await  _bookingRepository.UpdateStatusById(bookingId, status);
+            if (result)
+            {
+                return _apiResponseFactory.Success(true, "Status updated successfully");
+            }
+            else
+            {
+                return _apiResponseFactory.Fail<bool>(
+                    StatusCodes.Status500InternalServerError,
+                    "Failed to update status or not found"
                 );
             }
         }
