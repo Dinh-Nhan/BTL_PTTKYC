@@ -6,7 +6,7 @@ const userApi = {
   },
 
   addUser: (data) => {
-    return axiosClient.port("/api/user", data);
+    return axiosClient.post("/api/user", data);
   },
 
   searchUserByInfo: (info) => {

@@ -8,18 +8,46 @@ import { Button } from "@/components/ui/button";
 import StaffTable from "@/components/admin/staff/staff-table";
 import StaffModal from "@/components/admin/staff/staff-modal";
 import ConfirmDialog from "@/components/admin/shared/confirm-dialog";
-import { redirect } from "react-router-dom";
 import userApi from "@/api/userApi";
+import { Navigate } from "react-router-dom";
 
 interface Staff {
   id: string;
   name: string;
   email: string;
+  password: string;
   phone: string;
-  role: "employee";
-  status: "active" | "inactive";
+  birth: string;        // yyyy-MM-dd
+  role: "0" | "1";      // 0 = admin, 1 = employee
+  gender: "0" | "1";    // 0 = nữ, 1 = nam
+  status: "0" | "1";    // 0 = inactive, 1 = active
   joinedAt: string;
 }
+
+const mapStaffToApi = (staff: Staff) => ({
+  email: staff.email,
+  passwordHashing: staff.password,
+  fullName: staff.name,
+  phoneNumber: staff.phone,
+  gender: staff.gender === "1",
+  dateOfBirth: staff.birth,            // yyyy-MM-dd
+  roleId: staff.role === "1",
+  isActive: staff.status === "1",
+  createdAt: new Date().toISOString(),
+});
+
+const mapApiToStaff = (apiStaff: any): Staff => ({
+  id: apiStaff.id,
+  name: apiStaff.fullName,
+  email: apiStaff.email,
+  password: "",
+  phone: apiStaff.phoneNumber,
+  birth: apiStaff.dateOfBirth,
+  role: apiStaff.roleId ? "1" : "0",
+  gender: apiStaff.gender ? "1" : "0",
+  status: apiStaff.isActive ? "1" : "0",
+  joinedAt: apiStaff.createdAt,
+});
 
 const StaffPage = () => {
   const { isAdmin } = useAuth();
@@ -31,14 +59,17 @@ const StaffPage = () => {
 
   // Only admin can access this page
   if (!isAdmin) {
-    redirect("/");
+    return <Navigate to="/" replace />;
   }
 
   useEffect(() => {
     const fetchStaff = async () => {
       try {
         const res = await userApi.getAll();
-        setStaffList(res.data.result);
+        const staffs: Staff[] = res.data.result.map(mapApiToStaff);
+
+        setStaffList(staffs);
+        setFilteredStaff(staffs);
       } catch (error) {
         console.log("Failed to fetch staff:", error);
         toast.error("Lỗi khi lấy dữ liệu nhân viên");
@@ -62,22 +93,52 @@ const StaffPage = () => {
     setFilteredStaff(filtered);
   };
 
-  const handleSaveStaff = (staff: Staff) => {
-    if (editingStaff) {
-      // Update existing
-      const updated = staffList.map((s) => (s.id === staff.id ? staff : s));
-      setStaffList(updated);
-      setFilteredStaff(updated);
-      toast.success("Staff updated successfully");
-    } else {
-      // Add new
-      const newStaff = { ...staff, id: `S${String(Date.now()).slice(-4)}` };
-      setStaffList((prev) => [newStaff, ...prev]);
-      setFilteredStaff((prev) => [newStaff, ...prev]);
-      toast.success("Staff added successfully");
+  const handleSaveStaff = async (staff: Staff) => {
+    try {
+      if (editingStaff) {
+        // Update existing
+        await userApi.editUser(staff.id, mapStaffToApi(staff));
+
+        const updated = staffList.map((s) => s.id === staff.id ? staff : s);
+
+        setStaffList(updated);
+        setFilteredStaff(updated);
+        toast.success("Cập nhật nhân viên thành công");
+      } else {
+        // Add new
+        const payload = mapStaffToApi(staff);
+        console.log("ADD USER PAYLOAD:", payload);
+
+        const res = await userApi.addUser(payload);
+        // const res = await userApi.addUser(mapStaffToApi(staff));
+
+        // console.log("ADD USER RESPONSE:", res.data); // 👈 dòng này
+
+        const apiStaff = res.data;
+
+        const newStaff: Staff = {
+          id: apiStaff.id,
+          name: apiStaff.fullName,
+          email: apiStaff.email,
+          password: "",
+          phone: apiStaff.phoneNumber,
+          birth: apiStaff.dateOfBirth,
+          role: apiStaff.roleId ? "1" : "0",
+          gender: apiStaff.gender ? "1" : "0",
+          status: apiStaff.isActive ? "1" : "0",
+          joinedAt: apiStaff.createdAt,
+        }
+
+        setStaffList((prev) => [newStaff, ...prev]);
+        setFilteredStaff((prev) => [newStaff, ...prev]);
+        toast.success("Thêm nhân viên thành công");
+      }
+      setShowModal(false);
+      setEditingStaff(null);
+    } catch (error) {
+      console.error("Lỗi khi lưu nhân viên: ", error);
+      toast.error("Lỗi khi lưu nhân viên");
     }
-    setShowModal(false);
-    setEditingStaff(null);
   };
 
   const handleDeleteStaff = () => {
@@ -110,7 +171,7 @@ const StaffPage = () => {
           </div>
           <Button onClick={() => setShowModal(true)}>
             <Plus className="w-4 h-4 mr-2" />
-            Add Staff
+            Thêm nhân viên
           </Button>
         </div>
 
