@@ -19,15 +19,18 @@ interface StaffTableProps {
 }
 
 const statusStyles = {
-  active: "bg-success/10 text-success border-success/20",
-  inactive: "bg-muted text-muted-foreground border-muted",
+  "1": "bg-success/10 text-success border-success/20",
+  "0": "bg-muted text-muted-foreground border-muted",
+};
+
+const statusLabels = {
+  "1": "Đang hoạt động",
+  "0": "Ngưng hoạt động",
 };
 
 const roleLabels = {
-  receptionist: "Receptionist",
-  accountant: "Accountant",
-  manager: "Manager",
-  housekeeping: "Housekeeping",
+  1: "Nhân viên",
+  0: "Admin",
 };
 
 const StaffTable = ({ staff, onEdit, onDelete }: StaffTableProps) => {
@@ -37,13 +40,13 @@ const StaffTable = ({ staff, onEdit, onDelete }: StaffTableProps) => {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead>Name</TableHead>
+              <TableHead>Tên</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Joined</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Số điện thoại</TableHead>
+              <TableHead>Chức vụ</TableHead>
+              <TableHead>Trạng thái</TableHead>
+              <TableHead>Ngày sinh</TableHead>
+              <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -53,7 +56,7 @@ const StaffTable = ({ staff, onEdit, onDelete }: StaffTableProps) => {
                   colSpan={7}
                   className="text-center py-8 text-muted-foreground"
                 >
-                  No staff members found
+                  Không tìm thấy nhân viên
                 </TableCell>
               </TableRow>
             ) : (
@@ -68,11 +71,10 @@ const StaffTable = ({ staff, onEdit, onDelete }: StaffTableProps) => {
                       variant="outline"
                       className={statusStyles[member.status]}
                     >
-                      {member.status.charAt(0).toUpperCase() +
-                        member.status.slice(1)}
+                      {statusLabels[member.status]}
                     </Badge>
                   </TableCell>
-                  <TableCell>{member.joinedAt}</TableCell>
+                  <TableCell>{member.birth}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button

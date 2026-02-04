@@ -25,20 +25,8 @@ interface StaffModalProps {
   onSave: (staff: Staff) => void;
 }
 
-const mapStaffToApi = (staff: Staff) => ({
-  email: staff.email,
-  passwordHashing: staff.password,
-  fullName: staff.name,
-  phoneNumber: staff.phone,
-  gender: staff.gender === "1",
-  dateOfBirth: staff.birth,            // yyyy-MM-dd
-  roleId: staff.role === "1",
-  isActive: staff.status === "1",
-  createdAt: new Date().toISOString(),
-});
-
 const defaultStaff: Staff = {
-  id: "",
+  id: 0,
   name: "",
   email: "",
   password: "",
@@ -104,18 +92,20 @@ const StaffModal = ({ staff, open, onOpenChange, onSave }: StaffModalProps) => {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Mật khẩu</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              placeholder="Nhập mật khẩu"
-            />
-          </div>
+          {!staff && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Mật khẩu</Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                placeholder="Nhập mật khẩu"
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="phone">Số điện thoại</Label>
@@ -141,24 +131,29 @@ const StaffModal = ({ staff, open, onOpenChange, onSave }: StaffModalProps) => {
             />
           </div>
 
+
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Quyền</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, role: value as Staff["role"] })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Admin</SelectItem>
-                  <SelectItem value="1">Nhân viên</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
+            {!staff && (
+              <div className="space-y-2">
+                <Label>Quyền</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, role: value as Staff["role"] })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Admin</SelectItem>
+                    <SelectItem value="1">Nhân viên</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )
+            }
 
             <div className="space-y-2">
               <Label>Giới tính</Label>

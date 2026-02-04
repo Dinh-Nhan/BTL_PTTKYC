@@ -12,7 +12,7 @@ import userApi from "@/api/userApi";
 import { Navigate } from "react-router-dom";
 
 interface Staff {
-  id: string;
+  id: number;
   name: string;
   email: string;
   password: string;
@@ -47,6 +47,17 @@ const mapApiToStaff = (apiStaff: any): Staff => ({
   gender: apiStaff.gender ? "1" : "0",
   status: apiStaff.isActive ? "1" : "0",
   joinedAt: apiStaff.createdAt,
+});
+
+const mapStaffToUpdateApi = (staff: Staff) => ({
+  userId: Number(staff.id),
+  email: staff.email,
+  fullName: staff.name,
+  phoneNumber: staff.phone,
+  gender: staff.gender === "1",
+  dateOfBirth: staff.birth,
+  isActive: staff.status === "1",
+  updatedAt: new Date().toISOString(),
 });
 
 const StaffPage = () => {
@@ -97,7 +108,13 @@ const StaffPage = () => {
     try {
       if (editingStaff) {
         // Update existing
-        await userApi.editUser(staff.id, mapStaffToApi(staff));
+        const payload = mapStaffToUpdateApi(staff);
+
+        console.log("EDIT STAFF ID:", staff.id, typeof staff.id);
+
+        console.log(payload);
+
+        await userApi.editUser(staff.id, payload);
 
         const updated = staffList.map((s) => s.id === staff.id ? staff : s);
 
@@ -107,12 +124,8 @@ const StaffPage = () => {
       } else {
         // Add new
         const payload = mapStaffToApi(staff);
-        console.log("ADD USER PAYLOAD:", payload);
 
         const res = await userApi.addUser(payload);
-        // const res = await userApi.addUser(mapStaffToApi(staff));
-
-        // console.log("ADD USER RESPONSE:", res.data); // 👈 dòng này
 
         const apiStaff = res.data;
 
