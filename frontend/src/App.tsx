@@ -1,13 +1,4 @@
 import { Route, Routes } from "react-router-dom";
-// import Admin from "./pages/Admin";
-// import RoomManagerPage from "./pages/Manager/RoomManagerPage";
-// import DashBoardPage from "./pages/Manager/DashboardPage";
-// import BookingPage from "./pages/Manager/BookingPage";
-// import InvoicesPage from "./pages/Manager/InvoicesPage";
-// import StaffPage from "./pages/Manager/StaffPage";
-// import CustomerPage from "./pages/Manager/CustomerPage";
-
-import Login from "./pages/Login";
 import Home from "./pages/Home";
 import RoomDetail from "./pages/RoomDetail";
 const App = () => {
@@ -24,8 +15,8 @@ const App = () => {
     // </Admin>
     <Routes>
       <Route path="/" element={<Home />} />
-
       <Route path="/room/:id" element={<RoomDetail/>} />
+
       {/* <Route path="/login" element={<Login />} /> */}
     </Routes>
   );

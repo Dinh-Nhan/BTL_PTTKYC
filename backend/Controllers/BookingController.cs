@@ -1,9 +1,8 @@
 ﻿using backend.Dtos.Request;
 using backend.Service.interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.WebSockets;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace backend.Controllers
 {
@@ -14,22 +13,25 @@ namespace backend.Controllers
     {
         private readonly IBookingService _bookingService;
         private readonly ILogger<BookingController> _logger;
-        public BookingController(IBookingService bookingService, ILogger<BookingController> logger)
+        private readonly IMemoryCache _cache;
+
+        public BookingController(IBookingService bookingService,
+            ILogger<BookingController> logger,
+            IMemoryCache cache
+            )
         {
+            _cache = cache;
             _bookingService = bookingService;
             _logger = logger;
         }
-
 
         [HttpPost("create-booking")]
         [AllowAnonymous]
         public async Task<IActionResult> CreateBooking([FromBody] BookingRequest request)
         {
-            // lấy địa chỉ IP của client
             var ipAddress = GetClientIPv4Address();
-
             var response = await _bookingService.CreateBookingForClient(request, ipAddress);
-            
+
             return StatusCode(response.statusCode, response);
         }
 
@@ -37,7 +39,6 @@ namespace backend.Controllers
         public async Task<IActionResult> getAllBooking()
         {
             var response = await _bookingService.GetAllBookings();
-
             return StatusCode(response.statusCode, response);
         }
 
@@ -46,7 +47,6 @@ namespace backend.Controllers
         public async Task<IActionResult> getBookingById(int bookingId)
         {
             var response = await _bookingService.GetBookingById(bookingId);
-
             return StatusCode(response.statusCode, response);
         }
 
@@ -56,7 +56,6 @@ namespace backend.Controllers
             var response = await _bookingService.CancelBooking(bookingId, request);
             return StatusCode(response.statusCode, response);
         }
-
 
         [HttpGet("query-transaction/{bookingId}")]
         [AllowAnonymous]
@@ -73,7 +72,6 @@ namespace backend.Controllers
                 );
 
                 var response = await _bookingService.QueryTransactionStatus(bookingId, ipAddress);
-
                 return StatusCode(response.statusCode, response);
             }
             catch (Exception ex)
@@ -87,9 +85,8 @@ namespace backend.Controllers
             }
         }
 
-
         [HttpPost("refund")]
-        [AllowAnonymous] // Có thể thay bằng [Authorize] nếu cần xác thực
+        [AllowAnonymous]
         public async Task<IActionResult> RefundBooking([FromBody] RefundRequest request)
         {
             try
@@ -113,7 +110,6 @@ namespace backend.Controllers
                 );
 
                 var response = await _bookingService.RefundBooking(request, ipAddress);
-
                 return StatusCode(response.statusCode, response);
             }
             catch (Exception ex)
@@ -180,6 +176,47 @@ namespace backend.Controllers
             }
         }
 
+        [HttpPost("draft")]
+        [AllowAnonymous]
+        public IActionResult CreateDraft([FromBody] BookingDraftRequest req)
+        {
+            var draft = new BookingDraft
+            {
+                Id = Guid.NewGuid().ToString(),
+                RoomId = req.RoomId,
+                Email = req.Email,
+                FullName = req.FullName,
+                PhoneNumber = req.PhoneNumber,
+                CheckIn = req.CheckIn,
+                CheckOut = req.CheckOut,
+                Adult = req.Adult,
+                Child = req.Child,
+                ExpireAt = DateTime.UtcNow.AddMinutes(15)
+            };
+
+            var cacheOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpiration = draft.ExpireAt
+            };
+
+            _cache.Set(draft.Id, draft, cacheOptions);
+
+            return Ok(new
+            {
+                draftId = draft.Id,
+                expireAt = draft.ExpireAt
+            });
+        }
+
+        [HttpGet("draft/{draftId}")]
+        [AllowAnonymous]
+        public IActionResult GetDraft(string draftId)
+        {
+            if (!_cache.TryGetValue(draftId, out BookingDraft draft))
+                return NotFound("Draft expired or not found");
+
+            return Ok(draft);
+        }
 
         #region helper methods
         private string GetClientIPv4Address()
@@ -191,14 +228,12 @@ namespace backend.Controllers
                 return "127.0.0.1";
             }
 
-            // Xử lý IPv6 loopback (::1) thành IPv4 loopback
             if (ipAddress.IsIPv4MappedToIPv6)
             {
                 ipAddress = ipAddress.MapToIPv4();
             }
             else if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
             {
-                // Nếu là ::1 hoặc IPv6 khác
                 if (System.Net.IPAddress.IsLoopback(ipAddress))
                 {
                     return "127.0.0.1";
@@ -209,4 +244,18 @@ namespace backend.Controllers
         }
         #endregion
     }
+}
+
+public class BookingDraft
+{
+    public string Id { get; set; }
+    public int RoomId { get; set; }
+    public string Email { get; set; }
+    public string FullName { get; set; }
+    public string PhoneNumber { get; set; }
+    public DateTime CheckIn { get; set; }
+    public DateTime CheckOut { get; set; }
+    public int Adult { get; set; }
+    public int Child { get; set; }
+    public DateTime ExpireAt { get; set; }
 }

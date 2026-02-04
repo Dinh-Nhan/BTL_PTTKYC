@@ -23,9 +23,8 @@ const RoomDetail = () => {
   const [showBooking, setShowBooking] = useState(false);
   const [room, setRoom] = useState<any>(null);
   // const room = getRoomById(Number(id));
-  const relatedRooms = getRelatedRooms(Number(id), 3);
   const [loading, setLoading] = useState(true);
-
+  const [relatedRooms, setRelatedRooms] = useState<any[]>([]);
 
   // Scroll to top when room id changes
   useEffect(() => {
@@ -37,6 +36,30 @@ const RoomDetail = () => {
         const response = await roomApi.getRoomById(id);
         const roomData = response.data.result;
         
+        const roomsData = await roomApi.getAll();
+        const allRooms = roomsData.data.result;
+
+        const related = allRooms.filter(
+          (r: any) =>
+            r.roomType?.typeName === roomData.roomType?.typeName &&
+            r.roomId !== roomData.roomId
+        );
+        setRelatedRooms(
+          related.map((r: any) => ({
+            id: r.roomId,
+            name: r.roomType?.typeName,
+            description: r.roomType?.description,
+            price: r.roomType?.basePrice,
+            guests: r.roomType?.maxAdult,
+            type: r.roomType?.typeName,
+            image: r.roomType?.imageUrl,
+            amenities:
+              r.roomType?.amenities
+                ?.split(",")
+                .map((a: string) => a.trim()) || [],
+            roomType: r.roomType,
+          }))
+        );
         // Map dữ liệu từ API về format hiển thị
         const mappedRoom = {
           id: roomData.roomId,
@@ -44,7 +67,7 @@ const RoomDetail = () => {
           description: roomData.roomType?.description,
           fullDescription: roomData.roomType?.description,
           price: roomData.roomType?.basePrice,
-          guests: roomData.roomType?.maxAdult,
+          guests: parseInt(roomData.roomType?.maxAdult) + parseInt(roomData.roomType?.maxChildren),
           type: roomData.roomType?.typeName,
           image: roomData.roomType?.imageUrl,
           images: roomData.roomType?.imageUrl ? [roomData.roomType?.imageUrl] : [],
@@ -52,7 +75,7 @@ const RoomDetail = () => {
           rating: 4.5, // Nếu API không có, dùng giá trị mặc định
           reviews: 10,
           area: roomData.roomType?.roomArea || "N/A",
-          status: roomData.status || "available",
+          status: roomData.status || "AVAILABLE",
           roomType: roomData.roomType         
         };
         
@@ -70,6 +93,7 @@ const RoomDetail = () => {
       getDetail();
     }
   }, [id]);
+
 
   if (loading) {
     return (
@@ -210,9 +234,6 @@ const RoomDetail = () => {
                   <h1 className="text-3xl font-semibold text-foreground">
                     {room.name}
                   </h1>
-                  <p className="mt-2 text-sm text-muted-foreground capitalize">
-                    {room.type}
-                  </p>
                 </div>
 
                 {/* Rating and Reviews */}
@@ -305,12 +326,12 @@ const RoomDetail = () => {
                   <div>
                     <span
                       className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                        room.status === "available"
+                        room.status === "AVAILABLE"
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {room.status === "available"
+                      {room.status === "AVAILABLE"
                         ? "✓ Còn phòng"
                         : "✕ Hết phòng"}
                     </span>
@@ -322,7 +343,7 @@ const RoomDetail = () => {
                     disabled={room.status === "unavailable"}
                     className="w-full rounded-md bg-accent px-5 py-3 text-sm font-medium text-accent-foreground hover:bg-accent/90 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
-                    {room.status === "available"
+                    {room.status === "AVAILABLE"
                       ? "Đặt phòng ngay"
                       : "Không có sẵn"}
                   </button>

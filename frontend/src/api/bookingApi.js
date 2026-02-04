@@ -20,6 +20,15 @@ export const bookingApi = {
   querydrBooking: (bookingId) => {
     return axiosClient.get(`/api/booking/querydr/${bookingId}`);
   },
+  createDraft: (draftData) => {
+    return axiosClient.post("/api/Booking/draft", { ...draftData });
+  },
+  getDraft: (draftId) => {
+    return axiosClient.get(`/api/Booking/draft/${draftId}`);
+  },
+  sendBookingEmail: (bookingId) => {
+    return axiosClient.post("/api/EmailConfirmation/send-booking-email", { bookingId });
+  }
 };
 
 export default bookingApi;

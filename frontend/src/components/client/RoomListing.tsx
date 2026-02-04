@@ -8,14 +8,20 @@ interface RoomListingProps {
   rooms: any[]; 
   setRooms: (data: any[]) => void;         
   searchParams: any;
+  autoOpenRoomId?: number | null;
+  onModalOpened?: () => void;
 }
 
-const RoomListing = ({ searchParams, rooms, setRooms }: RoomListingProps) => {
+const RoomListing = ({ 
+  searchParams, 
+  rooms, 
+  setRooms,
+  autoOpenRoomId,
+  onModalOpened 
+}: RoomListingProps) => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, Infinity]);
   const [selectedType, setSelectedType] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
-
-  // const [rooms, setRooms] = useState<any[]>([]);
   const [load, setLoad] = useState(false);
 
   useEffect(() => {
@@ -49,14 +55,11 @@ const RoomListing = ({ searchParams, rooms, setRooms }: RoomListingProps) => {
     fetchRooms();
   }, []);
 
-
-
   const filteredRooms = rooms.filter((room) => {
     const matchesPrice =
       room.price >= priceRange[0] && room.price <= priceRange[1];
 
     const matchesType = selectedType === "all" || room.type === selectedType;
-
 
     const matchesGuests = searchParams.guests
       ? room.guests >= searchParams.guests
@@ -105,7 +108,12 @@ const RoomListing = ({ searchParams, rooms, setRooms }: RoomListingProps) => {
         {sortedRooms.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2">
             {sortedRooms.map((room) => (
-              <RoomCard key={room.id} room={room} />
+              <RoomCard 
+                key={room.id} 
+                room={room}
+                autoOpen={autoOpenRoomId === room.id}
+                onModalOpened={onModalOpened}
+              />
             ))}
           </div>
         ) : (
