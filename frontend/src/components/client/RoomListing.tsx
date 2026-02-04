@@ -5,55 +5,58 @@ import { Card } from "../ui/card";
 import roomApi from "@/api/roomApi.js";
 
 interface RoomListingProps {
+  rooms: any[]; 
+  setRooms: (data: any[]) => void;         
   searchParams: any;
 }
 
-const RoomListing = ({ searchParams }: RoomListingProps) => {
+const RoomListing = ({ searchParams, rooms, setRooms }: RoomListingProps) => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, Infinity]);
   const [selectedType, setSelectedType] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
 
-  const [rooms, setRooms] = useState<any[]>([]);
+  // const [rooms, setRooms] = useState<any[]>([]);
   const [load, setLoad] = useState(false);
 
   useEffect(() => {
     const fetchRooms = async () => {
-      try {
-        setLoad(true);
-
-        const res = await roomApi.getAll();
-
-        const mappedRooms = res.data.result.map((room: any) => ({
-          id: room.roomId,
-          name: room.roomType?.typeName,
-          description: room.roomType?.description,
-          price: room.roomType?.basePrice,
-          guests: room.roomType?.maxAdult,
-          type: room.roomType?.typeName,
-          image: room.roomType?.imageUrl,
-          amenities:
-            room.roomType?.amenities?.split(",").map((a: string) => a.trim()) ||
-            [],
-
-          roomType: room.roomType, // giữ lại nếu cần
-        }));
-
-        setRooms(mappedRooms);
-      } catch (error) {
-        console.error("Failed to fetch rooms:", error);
-      } finally {
-        setLoad(false);
+      if (rooms.length === 0) {
+        try {
+          setLoad(true);
+          const res = await roomApi.getAll();
+          const mappedRooms = res.data.result.map((room: any) => ({
+            id: room.roomId,
+            name: room.roomType?.typeName,
+            description: room.roomType?.description,
+            price: room.roomType?.basePrice,
+            guests: room.roomType?.maxAdult,
+            type: room.roomType?.typeName,
+            image: room.roomType?.imageUrl,
+            amenities:
+              room.roomType?.amenities?.split(",").map((a: string) => a.trim()) ||
+              [],
+            roomType: room.roomType,
+          }));
+          setRooms(mappedRooms);
+        } catch (error) {
+          console.error("Failed to fetch rooms:", error);
+        } finally {
+          setLoad(false);
+        }
       }
     };
 
     fetchRooms();
   }, []);
 
+
+
   const filteredRooms = rooms.filter((room) => {
     const matchesPrice =
       room.price >= priceRange[0] && room.price <= priceRange[1];
 
     const matchesType = selectedType === "all" || room.type === selectedType;
+
 
     const matchesGuests = searchParams.guests
       ? room.guests >= searchParams.guests

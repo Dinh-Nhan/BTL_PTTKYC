@@ -14,20 +14,77 @@ import { getRoomById, getRelatedRooms } from "@/lib/room-data";
 import Header from "@/components/client/Header";
 import RoomCard from "@/components/client/RoomCard";
 import BookingModal from "@/components/client/BookingModal";
+import roomApi from "@/api/roomApi";
 
 const RoomDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showBooking, setShowBooking] = useState(false);
-
-  const room = getRoomById(Number(id));
+  const [room, setRoom] = useState<any>(null);
+  // const room = getRoomById(Number(id));
   const relatedRooms = getRelatedRooms(Number(id), 3);
+  const [loading, setLoading] = useState(true);
+
 
   // Scroll to top when room id changes
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    const getDetail = async () => {
+      try {
+        setLoading(true);
+        const response = await roomApi.getRoomById(id);
+        const roomData = response.data.result;
+        
+        // Map dữ liệu từ API về format hiển thị
+        const mappedRoom = {
+          id: roomData.roomId,
+          name: roomData.roomType?.typeName,
+          description: roomData.roomType?.description,
+          fullDescription: roomData.roomType?.description,
+          price: roomData.roomType?.basePrice,
+          guests: roomData.roomType?.maxAdult,
+          type: roomData.roomType?.typeName,
+          image: roomData.roomType?.imageUrl,
+          images: roomData.roomType?.imageUrl ? [roomData.roomType?.imageUrl] : [],
+          amenities: roomData.roomType?.amenities?.split(",").map((a: string) => a.trim()) || [],
+          rating: 4.5, // Nếu API không có, dùng giá trị mặc định
+          reviews: 10,
+          area: roomData.roomType?.roomArea || "N/A",
+          status: roomData.status || "available",
+          roomType: roomData.roomType         
+        };
+        
+        setRoom(mappedRoom);
+        
+      } catch (error) {
+        console.error("Error fetching room details:", error);
+        setRoom(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      getDetail();
+    }
   }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center justify-center py-12">
+            <p className="mb-4 text-lg text-muted-foreground">
+              Đang tải thông tin phòng...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!room) {
     return (
@@ -95,7 +152,7 @@ const RoomDetail = () => {
             <div className="lg:col-span-2">
               <div className="relative mb-4 aspect-video overflow-hidden rounded-lg bg-secondary">
                 <img
-                  src={currentImage || "/placeholder.svg"}
+                  src='https://tubepfurniture.com/wp-content/uploads/2020/09/phong-mau-khach-san-go-cong-nghiep-01.jpg'
                   alt={room.name}
                   className="h-full w-full object-cover"
                 />
@@ -138,7 +195,7 @@ const RoomDetail = () => {
                       }`}
                     >
                       <img
-                        src={image || "/placeholder.svg"}
+                        src='https://tubepfurniture.com/wp-content/uploads/2020/09/phong-mau-khach-san-go-cong-nghiep-01.jpg'
                         alt={`${room.name} ${index + 1}`}
                         className="h-full w-full object-cover"
                       />
@@ -214,7 +271,7 @@ const RoomDetail = () => {
                     {room.amenities.map((amenity) => (
                       <div
                         key={amenity}
-                        className="flex items-center gap-3 rounded-lg bg-secondary p-3"
+                        className="flex items-center gap-3 rounded-lg bg-secondary p-4"
                       >
                         {getAmenityIcon(amenity)}
                         <span className="text-sm text-foreground">
@@ -225,46 +282,7 @@ const RoomDetail = () => {
                   </div>
                 </div>
 
-                {/* Additional Info */}
-                {room.additionalInfo && (
-                  <div className="rounded-lg bg-secondary p-4">
-                    <h3 className="mb-3 text-sm font-semibold text-foreground">
-                      Thông tin bổ sung
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      {room.additionalInfo.checkInTime && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            Giờ nhận phòng
-                          </p>
-                          <p className="text-foreground">
-                            {room.additionalInfo.checkInTime}
-                          </p>
-                        </div>
-                      )}
-                      {room.additionalInfo.checkOutTime && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            Giờ trả phòng
-                          </p>
-                          <p className="text-foreground">
-                            {room.additionalInfo.checkOutTime}
-                          </p>
-                        </div>
-                      )}
-                      {room.additionalInfo.cancellationPolicy && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            Chính sách hủy phòng
-                          </p>
-                          <p className="text-foreground">
-                            {room.additionalInfo.cancellationPolicy}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                
               </div>
             </div>
 
