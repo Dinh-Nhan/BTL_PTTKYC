@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Card } from "../ui/card";
 import { X } from "lucide-react";
-
+import bookingApi from "@/api/bookingApi";
+import { useNavigate } from "react-router-dom";
 // interface BookingModalProps {
 //   room: {
 //     id: number;
@@ -11,19 +12,20 @@ import { X } from "lucide-react";
 //   };
 //   onClose: () => void;
 // }
-
 const BookingModal = ({ room, onClose }) => {
-  console.log("room: ", room);
+  // console.log("room: ", room);
   const [step, setStep] = useState<"dates" | "details" | "payment">("dates");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState("1");
+  const [adult, setAdult] = useState("1");
+  const [children, setChildren] = useState("0");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvc, setCardCvc] = useState("");
-
+  const navigate = useNavigate();
   // Tính số đêm đặt phòng
   const nights =
     checkIn && checkOut // Nếu = 0 tức là người dùng chưa chọn ngày
@@ -51,16 +53,39 @@ const BookingModal = ({ room, onClose }) => {
       "Booking confirmed! Order ID: #" +
         Math.random().toString(36).substr(2, 9).toUpperCase(),
     );
+    const response = bookingApi.createBooking({
+      roomId: room.id,
+      client: {
+        fullName: fullName,
+        phoneNumber: phoneNumber,
+        email: email,
+      },
+      checkInDatetime: checkIn,
+      checkOutDatetime: checkOut,
+      adultCount: parseInt(adult),
+      childCount: parseInt(children),
+      note : ""
+    }).then((res) => {
+      console.log("Booking response: ", res.data);
+      
+      if(res.data.result!=null){
+        navigate(res.data.result.paymentUrl);
+      }
+    }).catch((err) => {
+      console.error("Booking error: ", err);
+    });
+
+
     onClose();
   };
 
   //   Tạo biến kiểm tra tính hợp lẹ của từng bước
   const isStep1Valid = checkIn && checkOut;
-  const isStep2Valid = fullName && email && guests;
+  const isStep2Valid = fullName && email && adult;
   const isStep3Valid = cardNumber && cardExpiry && cardCvc;
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm p-4 overflow-y-auto scrollbar-hide">
         <Card className="border-border bg-card w-full max-w-2xl shadow-lg">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border p-6">
@@ -164,16 +189,44 @@ const BookingModal = ({ room, onClose }) => {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-foreground">
-                      Số lượng khách hàng
+                      Số điện thoại
+                    </label>
+                    <input
+                      type="text"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="0123456789"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground">
+                      Số lượng người lớn
                     </label>
                     <select
-                      value={guests}
-                      onChange={(e) => setGuests(e.target.value)}
+                      value={adult}
+                      onChange={(e) => setAdult(e.target.value)}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       {[1, 2, 3, 4, 5, 6].map((num) => (
                         <option key={num} value={num}>
-                          {num} khách
+                          {num} người lớn
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground">
+                      Số lượng trẻ em
+                    </label>
+                    <select
+                      value={children}
+                      onChange={(e) => setChildren(e.target.value)}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                    >
+                      {[0, 1, 2, 3, 4, 5, 6].map((num) => (
+                        <option key={num} value={num}>
+                          {num} trẻ em
                         </option>
                       ))}
                     </select>

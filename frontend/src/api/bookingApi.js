@@ -1,8 +1,8 @@
-import axiosClient from "../axiosClient";
+import axiosClient from "./axiosClient";
 
 export const bookingApi = {
   createBooking: (bookingData) => {
-    return axiosClient.post("/api/bookings/create-booking", { ...bookingData });
+    return axiosClient.post("/api/Booking/create-booking", { ...bookingData });
   },
 
   getAllBookings: () => {
@@ -21,3 +21,5 @@ export const bookingApi = {
     return axiosClient.get(`/api/booking/querydr/${bookingId}`);
   },
 };
+
+export default bookingApi;

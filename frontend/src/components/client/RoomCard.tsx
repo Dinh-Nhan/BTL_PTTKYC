@@ -3,16 +3,30 @@ import BookingModal from "./BookingModal";
 import { Star } from "lucide-react";
 import { formatVND } from "@/lib/format";
 import { Card } from "../ui/card";
+import RoomDetail from "@/pages/RoomDetail";
+import { useNavigate } from "react-router-dom";
 
 const RoomCard = ({ room }) => {
   const [showBooking, setShowBooking] = useState(false);
+  const navigate = useNavigate();
+  
+  const handleCardClick = () => {
+    navigate(`/room/${room.id}`);
+  }
+
+  const handleBookingClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); 
+    setShowBooking(true);
+  };
 
   return (
     <>
-      <Card className="overflow-hidden border-border bg-card hover:shadow-md transition-shadow">
+      <Card 
+      onClick={handleCardClick}
+      className="overflow-hidden border-border bg-card hover:shadow-md transition-shadow">
         <div className="aspect-video bg-secondary overflow-hidden">
           <img
-            src={room.image || "/placeholder.svg"}
+            src='https://tubepfurniture.com/wp-content/uploads/2020/09/phong-mau-khach-san-go-cong-nghiep-01.jpg'
             alt={room.name}
             className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
           />
@@ -73,7 +87,7 @@ const RoomCard = ({ room }) => {
               </p>
             </div>
             <button
-              onClick={() => setShowBooking(true)}
+              onClick={handleBookingClick}
               className="rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground hover:bg-accent/90 transition-colors"
             >
               Đặt phòng
@@ -84,7 +98,7 @@ const RoomCard = ({ room }) => {
 
       {showBooking && (
         <BookingModal room={room} onClose={() => setShowBooking(false)} />
-      )}
+      )} 
     </>
   );
 };

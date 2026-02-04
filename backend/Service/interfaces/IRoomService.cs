@@ -10,7 +10,7 @@ namespace backend.Service.interfaces
         ApiResponse<bool> deactiveRoom(int roomId);
         ApiResponse<bool> activeRoom(int roomId);
 
-        ApiResponse<Room> getById(int roomId);
+        ApiResponse<RoomResponse> getById(int roomId);
 
         Task<ApiResponse<List<RoomResponse>>> listRoomAvailable();
 

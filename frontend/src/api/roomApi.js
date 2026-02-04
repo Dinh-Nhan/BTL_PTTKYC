@@ -18,6 +18,15 @@ const roomApi = {
   deactivate(roomId) {
     return axiosClient.patch(`/api/Room/${roomId}/deactivate`);
   },
+
+  //Get api/Room/search-by-date
+  searchByDate(checkIn, checkOut, adult, children) {
+    return axiosClient.get(`/api/Room/search-by-date?checkInDate=${checkIn}&checkOutDate=${checkOut}&adult=${adult}&children=${children}`);
+  },
+
+  getRoomById(roomId) {
+    return axiosClient.get(`/api/Room/${roomId}`);
+  },
 };
 
 export default roomApi;
