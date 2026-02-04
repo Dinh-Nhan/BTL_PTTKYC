@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import clientApi from "@/api/clientApi"
 
+
+
 const CustomerPage = () => {
   const { isAdmin } = useAuth();
   const [customersList, setCustomersList] =
@@ -24,13 +26,17 @@ const CustomerPage = () => {
       try {
         const res = await clientApi.getAll()
 
-
+        const clients = res.data.result;
+        setCustomersList(clients);
+        setFilteredCustomers(clients);
       } catch (error) {
         console.error("Không lấy được danh sách khách hàng: ", error);
         toast.error("Không lấy được danh sách khách hàng");
       }
     }
-  })
+
+    fetchClient();
+  }, [])
 
   const handleSearch = (query: string) => {
     if (!query) {
@@ -46,14 +52,21 @@ const CustomerPage = () => {
     setFilteredCustomers(filtered);
   };
 
-  const handleDeleteCustomer = () => {
+  const handleDeleteCustomer = async () => {
     if (!deletingCustomer) return;
 
-    const updated = customersList.filter((c) => c.id !== deletingCustomer.id);
-    setCustomersList(updated);
-    setFilteredCustomers(updated);
-    setDeletingCustomer(null);
-    toast.success("Customer deleted successfully");
+    try {
+      await clientApi.deleteClient(deletingCustomer.id);
+
+      const updated = customersList.filter((s) => s.id !== deletingCustomer.id)
+      setCustomersList(updated);
+      setFilteredCustomers(updated);
+      setDeletingCustomer(null);
+      toast.success("Customer deleted successfully");
+    } catch (error) {
+      console.log("Xoá khách hàng không thành công: ", error);
+      toast.error("Xoá khách hàng không thành công");
+    }
   };
 
   return (
