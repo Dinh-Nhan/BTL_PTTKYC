@@ -2,7 +2,7 @@ import axiosClient from "./axiosClient";
 
 const roomApi = {
   getAll: () => {
-    return axiosClient.get("/api/rooms");
+    return axiosClient.get("/api/room");
   },
 
   getAvailable() {

@@ -50,7 +50,9 @@ namespace backend.Repository.implementations
 
         public Room? getById(int roomId)
         {
-            return _context.Rooms.Find(roomId);
+            return _context.Rooms
+                .Include(r => r.RoomType)
+                .FirstOrDefault(r => r.RoomId == roomId);
         }
 
         public Room? GetByIdWithRoomType(int roomId)

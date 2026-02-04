@@ -58,5 +58,12 @@ namespace backend.Controllers
             var response = await _roomService.roomAvailableByDate(request);
             return StatusCode(response.statusCode, response);
         }
+
+        [HttpGet("{roomId}")]
+        public IActionResult getById(int roomId)
+        {
+            var response = _roomService.getById(roomId);
+            return StatusCode(response.statusCode, response);
+        }
     }
 }

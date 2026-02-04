@@ -16,6 +16,7 @@ namespace backend.Repository.implementations
         public async Task<Booking> createBooking(Booking booking)
         {
             var createdBooking = await _context.Bookings.AddAsync(booking);
+            _context.SaveChanges();
             return createdBooking.Entity;
         }
 

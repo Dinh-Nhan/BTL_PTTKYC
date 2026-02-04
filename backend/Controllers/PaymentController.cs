@@ -36,16 +36,16 @@ namespace backend.Controllers
 
                 // 3. Redirect về frontend với kết quả
                 // hiện tại chưa có frontend cho page success và fail nên trả về api trước
-                //var frontendUrl = paymentResult.Success
-                //    ? $"http://localhost:3000/booking/success?bookingId={paymentResult.BookingId}"
-                //    : $"http://localhost:3000/booking/failed?bookingId={paymentResult.BookingId}&message={Uri.EscapeDataString(paymentResult.Message)}";
+                var frontendUrl = result.statusCode == 200
+                 ? $"http://localhost:5173?payment=success&bookingId={result.result.bookingId}"
+                 : $"http://localhost:5173?payment=failed&message={Uri.EscapeDataString(result.message)}";
 
-                return StatusCode(result.statusCode, result);
+                return Redirect(frontendUrl);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing VNPay callback");
-                return Redirect("http://localhost:3000/booking/error");
+                return Redirect("http://localhost:5173/booking/error");
             }
         }
 

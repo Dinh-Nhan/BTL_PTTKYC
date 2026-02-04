@@ -1,97 +1,60 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import FilterSidebar from "./FilterSidebar";
 import RoomCard from "./RoomCard";
 import { Card } from "../ui/card";
+import roomApi from "@/api/roomApi.js";
 
 interface RoomListingProps {
   searchParams: any;
 }
-
-// Dữ liệu mẫu
-const ROOMS = [
-  {
-    id: 1,
-    name: "Deluxe Room",
-    description: "Spacious room with city view and modern amenities",
-    price: 2500000,
-    rating: 4.8,
-    reviews: 245,
-    guests: 2,
-    type: "standard",
-    image: "/luxury-hotel-room-deluxe.jpg",
-    amenities: ["WiFi", "AC", "TV", "Mini Bar"],
-  },
-  {
-    id: 2,
-    name: "Premium Suite",
-    description: "Luxurious suite with separate living area and bath",
-    price: 4200000,
-    rating: 4.9,
-    reviews: 312,
-    guests: 4,
-    type: "suite",
-    image: "/luxury-hotel-room-suite.jpg",
-    amenities: ["WiFi", "AC", "TV", "Kitchenette", "Jacuzzi"],
-  },
-  {
-    id: 3,
-    name: "Standard Room",
-    description: "Comfortable room perfect for solo travelers",
-    price: 1500000,
-    rating: 4.6,
-    reviews: 189,
-    guests: 1,
-    type: "standard",
-    image: "/luxury-hotel-room-standard.jpg",
-    amenities: ["WiFi", "AC", "TV"],
-  },
-  {
-    id: 4,
-    name: "Family Suite",
-    description: "Large family-friendly suite with multiple bedrooms",
-    price: 5500000,
-    rating: 4.9,
-    reviews: 156,
-    guests: 6,
-    type: "family",
-    image: "/luxury-hotel-room-family-suite.jpg",
-    amenities: ["WiFi", "AC", "TV", "Kitchen", "Multiple Bedrooms"],
-  },
-  {
-    id: 5,
-    name: "Ocean View Room",
-    description: "Spectacular ocean views with private balcony",
-    price: 3800000,
-    rating: 4.9,
-    reviews: 298,
-    guests: 2,
-    type: "deluxe",
-    image: "/luxury-hotel-ocean-view-room.jpg",
-    amenities: ["WiFi", "AC", "TV", "Balcony", "Ocean View"],
-  },
-  {
-    id: 6,
-    name: "Presidential Suite",
-    description: "Ultimate luxury experience with panoramic views",
-    price: 9800000,
-    rating: 5.0,
-    reviews: 87,
-    guests: 6,
-    type: "suite",
-    image: "/luxury-hotel-presidential-suite.jpg",
-    amenities: ["WiFi", "AC", "TV", "Kitchen", "Concierge", "Private Spa"],
-  },
-];
 
 const RoomListing = ({ searchParams }: RoomListingProps) => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, Infinity]);
   const [selectedType, setSelectedType] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
 
-  const filteredRooms = ROOMS.filter((room) => {
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [load, setLoad] = useState(false);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        setLoad(true);
+
+        const res = await roomApi.getAll();
+
+        const mappedRooms = res.data.result.map((room: any) => ({
+          id: room.roomId,
+          name: room.roomType?.typeName,
+          description: room.roomType?.description,
+          price: room.roomType?.basePrice,
+          guests: room.roomType?.maxAdult,
+          type: room.roomType?.typeName,
+          image: room.roomType?.imageUrl,
+          amenities:
+            room.roomType?.amenities?.split(",").map((a: string) => a.trim()) ||
+            [],
+
+          roomType: room.roomType, // giữ lại nếu cần
+        }));
+
+        setRooms(mappedRooms);
+      } catch (error) {
+        console.error("Failed to fetch rooms:", error);
+      } finally {
+        setLoad(false);
+      }
+    };
+
+    fetchRooms();
+  }, []);
+
+  const filteredRooms = rooms.filter((room) => {
     const matchesPrice =
       room.price >= priceRange[0] && room.price <= priceRange[1];
+
     const matchesType = selectedType === "all" || room.type === selectedType;
+
     const matchesGuests = searchParams.guests
       ? room.guests >= searchParams.guests
       : true;
@@ -105,12 +68,14 @@ const RoomListing = ({ searchParams }: RoomListingProps) => {
         return a.price - b.price;
       case "price-high":
         return b.price - a.price;
-      case "rating":
-        return b.rating - a.rating;
       default:
         return 0;
     }
   });
+
+  if (load) {
+    return <p>Đang tải phòng...</p>;
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-4">

@@ -95,11 +95,11 @@ namespace backend.Service.implementations
             return _apiResponseFactory.Success(response);
         }
 
-        public ApiResponse<Room> getById(int roomId)
+        public ApiResponse<RoomResponse> getById(int roomId)
         {
             if(roomId <= 0)
             {
-                return _apiResponseFactory.Fail<Room>(
+                return _apiResponseFactory.Fail<RoomResponse>(
                         StatusCodes.Status400BadRequest,
                         "Room id must be greater than 0"
                     );
@@ -109,13 +109,13 @@ namespace backend.Service.implementations
 
             if(room == null)
             {
-                return _apiResponseFactory.Fail<Room>(
+                return _apiResponseFactory.Fail<RoomResponse>(
                         StatusCodes.Status404NotFound,
                         "Room not found"
                     );
             }
-
-            return _apiResponseFactory.Success(room);
+            var result = _mapper.Map<RoomResponse>(room);
+            return _apiResponseFactory.Success(result);
         }
 
         public async Task<ApiResponse<List<RoomResponse>>> listRoomAvailable()
