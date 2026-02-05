@@ -30,10 +30,10 @@ const BookingModal = ({ room, onClose }) => {
       ? Math.ceil(
         (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
         (1000 * 60 * 60 * 24),
-      )
+      ) 
       : 1;
 
-  const totalPrice = room.price * nights;
+  const totalPrice = room.price * nights * 0.1 ;
 
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

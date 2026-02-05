@@ -9,8 +9,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Customer } from "@/lib/mock-data";
-import { Trash2 } from "lucide-react";
-
 interface CustomersTableProps {
   customers: Customer[];
   onDelete?: (customer: Customer) => void;
@@ -19,7 +17,6 @@ interface CustomersTableProps {
 
 const CustomersTable = ({
   customers,
-  onDelete,
   isAdmin,
 }: CustomersTableProps) => {
   return (
@@ -31,7 +28,7 @@ const CustomersTable = ({
               <TableHead>Tên</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Số điện thoại</TableHead>
-              {isAdmin && <TableHead className="text-right">Hành động</TableHead>}
+              <TableHead>Ngày tham gia</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -46,23 +43,11 @@ const CustomersTable = ({
               </TableRow>
             ) : (
               customers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.name}</TableCell>
+                <TableRow key={customer.clientId}>
+                  <TableCell className="font-medium">{customer.fullName}</TableCell>
                   <TableCell>{customer.email}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
+                  <TableCell>{customer.phoneNumber}</TableCell>
                   <TableCell>{customer.createdAt}</TableCell>
-                  {isAdmin && (
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => onDelete?.(customer)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  )}
                 </TableRow>
               ))
             )}

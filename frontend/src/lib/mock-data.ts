@@ -59,9 +59,9 @@ export interface Staff {
 }
 
 export interface Customer {
-  id: string;
-  name: string;
-  phone: string;
+  clientId: number;
+  fullName: string;
+  phoneNumber: string;
   email: string;
   createdAt: string;
 }

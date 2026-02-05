@@ -45,9 +45,9 @@ const CustomerPage = () => {
     }
     const filtered = customersList.filter(
       (c) =>
-        c.name.toLowerCase().includes(query.toLowerCase()) ||
+        c.fullName.toLowerCase().includes(query.toLowerCase()) ||
         c.email.toLowerCase().includes(query.toLowerCase()) ||
-        c.phone.includes(query),
+        c.phoneNumber.includes(query),
     );
     setFilteredCustomers(filtered);
   };
@@ -56,9 +56,9 @@ const CustomerPage = () => {
     if (!deletingCustomer) return;
 
     try {
-      await clientApi.deleteClient(deletingCustomer.id);
+      await clientApi.deleteClient(deletingCustomer.clientId);
 
-      const updated = customersList.filter((s) => s.id !== deletingCustomer.id)
+      const updated = customersList.filter((s) => s.clientId !== deletingCustomer.clientId)
       setCustomersList(updated);
       setFilteredCustomers(updated);
       setDeletingCustomer(null);
@@ -93,7 +93,7 @@ const CustomerPage = () => {
         open={!!deletingCustomer}
         onOpenChange={(open) => !open && setDeletingCustomer(null)}
         title="Delete Customer"
-        description={`Are you sure you want to delete ${deletingCustomer?.name}? This action cannot be undone.`}
+        description={`Are you sure you want to delete ${deletingCustomer?.fullName}? This action cannot be undone.`}
         onConfirm={handleDeleteCustomer}
         confirmText="Delete"
         variant="destructive"
