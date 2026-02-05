@@ -58,6 +58,16 @@ const SearchPanel = ({ onSearch }: SearchPanelProps) => {
 
     setCheckIn(selectedDate);
   };
+  const handleCheckOutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedDate = e.target.value;
+
+    if (selectedDate < today) {
+      alert("Ngày check-in không được trước ngày hiện tại.");
+      return;
+    }
+
+    setCheckOut(selectedDate);
+  };
 
   return (
     <Card className="mb-12 border-border bg-card p-6 shadow-sm sm:p-8">
@@ -89,7 +99,8 @@ const SearchPanel = ({ onSearch }: SearchPanelProps) => {
             <input
               type="date"
               value={checkOut}
-              onChange={(e) => setCheckOut(e.target.value)}
+              min={today}
+              onChange={handleCheckOutChange}
               className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>

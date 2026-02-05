@@ -71,7 +71,7 @@ const Sidebar = () => {
         {!collapsed && (
           <div className="flex flex-col">
             <span className="font-semibold text-foreground">
-              Khách sạn ngàn sao
+              Khách sạn Hogwarts
             </span>
             <span className="text-xs text-muted-foreground">Quản lý</span>
           </div>

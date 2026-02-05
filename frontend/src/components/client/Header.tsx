@@ -7,7 +7,7 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light tracking-tight text-foreground">
-              Khách sạn ngàn sao
+              Khách sạn Hogwarts
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Hãy lựa chọn chúng tôi nếu bạn muốn có một đêm tuyệt vời
