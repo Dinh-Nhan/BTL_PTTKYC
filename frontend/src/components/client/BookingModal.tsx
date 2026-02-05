@@ -259,7 +259,7 @@ const BookingModal = ({ room, onClose }) => {
             Click vào link trong email để tiếp tục thanh toán
           </p>
           <p class="text-xs text-gray-500 mt-2">
-            ⏰ Email có hiệu lực trong 15 phút
+            Email có hiệu lực trong 15 phút
           </p>
           <p class="text-xs text-orange-600 mt-3">
             💡 Sau khi click link, bạn sẽ quay lại trang này để tiếp tục
