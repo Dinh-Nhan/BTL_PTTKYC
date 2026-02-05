@@ -8,7 +8,7 @@ namespace backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "ADMIN")]
+    //[Authorize(Roles = "ADMIN")]
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
