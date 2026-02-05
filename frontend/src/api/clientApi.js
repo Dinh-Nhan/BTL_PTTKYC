@@ -1,6 +1,6 @@
-import axiosClient from "../axiosClient";
+import axiosClient from "../api/axiosClient";
 
-export const clientApi = {
+const clientApi = {
   getAll: () => {
     return axiosClient.get("/api/client");
   },
@@ -13,3 +13,5 @@ export const clientApi = {
     return axiosClient.get(`/api/client/search`, { params: { info } });
   },
 };
+
+export default clientApi;

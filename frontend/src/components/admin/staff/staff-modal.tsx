@@ -26,7 +26,7 @@ interface StaffModalProps {
 }
 
 const defaultStaff: Staff = {
-  id: 0,
+  id: "",
   name: "",
   email: "",
   password: "",

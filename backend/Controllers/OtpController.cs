@@ -44,5 +44,8 @@ namespace backend.Controllers
 
             return Ok("OTP verified successfully");
         }
+
+        //[HttpPost("Confirm-email")]
+
     }
 }

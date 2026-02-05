@@ -10,7 +10,7 @@ import CreateBookingModal from "@/components/admin/bookings/create-booking-modal
 import BookingDetailsModal from "@/components/admin/bookings/booking-details-modal";
 import ConfirmDialog from "@/components/admin/shared/confirm-dialog";
 
-import bookingApi from "@/api/booKingApi";
+import bookingApi from "@/api/bookingApi";
 
 /* ================= TYPE ================= */
 

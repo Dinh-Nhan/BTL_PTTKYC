@@ -1,18 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BookingModal from "./BookingModal";
 import { Star } from "lucide-react";
 import { formatVND } from "@/lib/format";
 import { Card } from "../ui/card";
-import RoomDetail from "@/pages/RoomDetail";
 import { useNavigate } from "react-router-dom";
 
-const RoomCard = ({ room }) => {
+interface RoomCardProps {
+  room: any;
+  autoOpen?: boolean;
+  onModalOpened?: () => void;
+}
+
+const RoomCard = ({ room, autoOpen = false, onModalOpened }: RoomCardProps) => {
   const [showBooking, setShowBooking] = useState(false);
   const navigate = useNavigate();
   
+  // 🔥 Auto-open modal khi có autoOpen prop
+  useEffect(() => {
+    if (autoOpen && !showBooking) {
+      setShowBooking(true);
+      
+      // Notify parent component
+      if (onModalOpened) {
+        onModalOpened();
+      }
+    }
+  }, [autoOpen]);
+
   const handleCardClick = () => {
     navigate(`/room/${room.id}`);
-  }
+  };
 
   const handleBookingClick = (e: React.MouseEvent) => {
     e.stopPropagation(); 
@@ -22,8 +39,9 @@ const RoomCard = ({ room }) => {
   return (
     <>
       <Card 
-      onClick={handleCardClick}
-      className="overflow-hidden border-border bg-card hover:shadow-md transition-shadow">
+        onClick={handleCardClick}
+        className="overflow-hidden border-border bg-card hover:shadow-md transition-shadow cursor-pointer"
+      >
         <div className="aspect-video bg-secondary overflow-hidden">
           <img
             src='https://tubepfurniture.com/wp-content/uploads/2020/09/phong-mau-khach-san-go-cong-nghiep-01.jpg'
@@ -40,7 +58,7 @@ const RoomCard = ({ room }) => {
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-accent text-accent" />
                 <span className="text-sm font-medium text-foreground">
-                  {room.rating}
+                  {room.rating || 4.5}
                 </span>
               </div>
               <span className="text-xs text-muted-foreground">
@@ -50,15 +68,15 @@ const RoomCard = ({ room }) => {
           </div>
 
           {/* Description */}
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
             {room.description}
           </p>
 
           {/* Amenities */}
           <div className="flex flex-wrap gap-2">
-            {room.amenities.slice(0, 3).map((amenity) => (
+            {room.amenities.slice(0, 3).map((amenity, idx) => (
               <span
-                key={amenity}
+                key={idx}
                 className="inline-block rounded-full bg-secondary px-2.5 py-1 text-xs text-foreground"
               >
                 {amenity}

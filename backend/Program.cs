@@ -71,12 +71,21 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<OtpCacheService>();
 builder.Services.AddScoped<IBillService, BillService>();
 
+builder.Services.AddSingleton<EmailConfirmationCacheService>();
+
+
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+
+//logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddCors(options =>
 {
@@ -92,6 +101,12 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Program.cs
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Add("ngrok-skip-browser-warning", "true");
+    await next();
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
